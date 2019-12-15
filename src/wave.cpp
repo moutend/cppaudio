@@ -10,7 +10,6 @@ Wave::Wave(const std::wstring &filePath) {
   std::ifstream input(filePath.c_str(), std::ios::binary | std::ios::in);
 
   if (!input.is_open()) {
-    // throw
     return;
   }
 
