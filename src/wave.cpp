@@ -6,8 +6,8 @@
 #include "wave.h"
 
 namespace PCMAudio {
-Wave::Wave(const char *filePath) {
-  std::ifstream input(filePath, std::ios::binary | std::ios::in);
+Wave::Wave(const std::wstring &filePath) {
+  std::ifstream input(filePath.c_str(), std::ios::binary | std::ios::in);
 
   if (!input.is_open()) {
     // throw

@@ -2,11 +2,12 @@
 
 #include <cstdint>
 #include <iostream>
+#include <string>
 
 namespace PCMAudio {
 class Wave {
 public:
-  Wave(const char *filePath);
+  Wave(const std::wstring &filePath);
   Wave(char *buffer, size_t bufferLength);
   ~Wave();
 

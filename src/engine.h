@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #include "reader.h"
 #include "wave.h"
@@ -31,7 +32,7 @@ public:
   double Read();
 
   void Feed(int16_t index);
-  void Register(int16_t index, const char *filePath);
+  void Register(int16_t index, const std::wstring &filePath);
 
 private:
   Wave **mWaves = nullptr;
