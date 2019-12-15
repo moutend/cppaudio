@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <mutex>
 #include <string>
 
 #include "reader.h"
@@ -35,6 +36,8 @@ public:
   void Register(int16_t index, const std::wstring &filePath);
 
 private:
+  std::mutex mMutex;
+
   Wave **mWaves = nullptr;
   Reader **mReaders = nullptr;
 
@@ -62,6 +65,8 @@ public:
   void Feed(char *buffer, int32_t bufferLength);
 
 private:
+  std::mutex mMutex;
+
   Wave **mWaves = nullptr;
   Reader **mReaders = nullptr;
 

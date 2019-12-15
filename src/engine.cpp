@@ -2,9 +2,6 @@
 
 #include "engine.h"
 
-std::mutex launcherEngineMutex;
-std::mutex ringEngineMutex;
-
 namespace PCMAudio {
 LauncherEngine::LauncherEngine() {
   mWaves = new Wave *[mMaxWaves] {};
@@ -12,7 +9,7 @@ LauncherEngine::LauncherEngine() {
 }
 
 LauncherEngine::~LauncherEngine() {
-  std::lock_guard<std::mutex> guard(launcherEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     delete mWaves[i];
@@ -28,7 +25,7 @@ LauncherEngine::~LauncherEngine() {
 }
 
 void LauncherEngine::Reset() {
-  std::lock_guard<std::mutex> guard(launcherEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   mCompleted = false;
 
@@ -38,7 +35,7 @@ void LauncherEngine::Reset() {
 }
 
 void LauncherEngine::SetTargetSamplesPerSec(int32_t samples) {
-  std::lock_guard<std::mutex> guard(launcherEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   mTargetSamplesPerSec = samples;
 
@@ -50,7 +47,7 @@ void LauncherEngine::SetTargetSamplesPerSec(int32_t samples) {
 }
 
 void LauncherEngine::FadeIn() {
-  std::lock_guard<std::mutex> guard(launcherEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
@@ -60,7 +57,7 @@ void LauncherEngine::FadeIn() {
 }
 
 void LauncherEngine::FadeOut() {
-  std::lock_guard<std::mutex> guard(launcherEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
@@ -72,7 +69,7 @@ void LauncherEngine::FadeOut() {
 bool LauncherEngine::IsCompleted() { return mCompleted; }
 
 void LauncherEngine::Next() {
-  std::lock_guard<std::mutex> guard(launcherEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   mCurrentChannel = (mCurrentChannel + 1) % 2;
 
@@ -85,7 +82,7 @@ void LauncherEngine::Next() {
 }
 
 double LauncherEngine::Read() {
-  std::lock_guard<std::mutex> guard(launcherEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   double result = 0.0;
 
@@ -99,7 +96,7 @@ double LauncherEngine::Read() {
 }
 
 void LauncherEngine::Feed(int16_t index) {
-  std::lock_guard<std::mutex> guard(launcherEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
@@ -115,7 +112,7 @@ void LauncherEngine::Feed(int16_t index) {
 }
 
 void LauncherEngine::Register(int16_t index, const std::wstring &filePath) {
-  std::lock_guard<std::mutex> guard(launcherEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   if (index < 0 || index > mMaxReaders || filePath.empty()) {
     return;
@@ -132,7 +129,7 @@ RingEngine::RingEngine() {
 }
 
 RingEngine::~RingEngine() {
-  std::lock_guard<std::mutex> guard(ringEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     delete mWaves[i];
@@ -147,7 +144,7 @@ RingEngine::~RingEngine() {
 }
 
 void RingEngine::Reset() {
-  std::lock_guard<std::mutex> guard(ringEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   mCompleted = false;
 
@@ -157,7 +154,7 @@ void RingEngine::Reset() {
 }
 
 void RingEngine::SetTargetSamplesPerSec(int32_t samples) {
-  std::lock_guard<std::mutex> guard(ringEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   mTargetSamplesPerSec = samples;
 
@@ -169,7 +166,7 @@ void RingEngine::SetTargetSamplesPerSec(int32_t samples) {
 }
 
 void RingEngine::FadeIn() {
-  std::lock_guard<std::mutex> guard(ringEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   int16_t i = mIndex - 1 > 0 ? mIndex - 1 : mMaxReaders - 1;
 
@@ -179,7 +176,7 @@ void RingEngine::FadeIn() {
 }
 
 void RingEngine::FadeOut() {
-  std::lock_guard<std::mutex> guard(ringEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
@@ -189,7 +186,7 @@ void RingEngine::FadeOut() {
 }
 
 void RingEngine::Feed(char *buffer, int32_t bufferLength) {
-  std::lock_guard<std::mutex> guard(ringEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
@@ -211,7 +208,7 @@ void RingEngine::Feed(char *buffer, int32_t bufferLength) {
 bool RingEngine::IsCompleted() { return mCompleted; }
 
 void RingEngine::Next() {
-  std::lock_guard<std::mutex> guard(ringEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   mCurrentChannel = (mCurrentChannel + 1) % 2;
 
@@ -224,7 +221,7 @@ void RingEngine::Next() {
 }
 
 double RingEngine::Read() {
-  std::lock_guard<std::mutex> guard(ringEngineMutex);
+  std::lock_guard<std::mutex> guard(mMutex);
 
   double result = 0.0;
 
