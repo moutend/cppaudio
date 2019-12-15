@@ -117,7 +117,7 @@ void LauncherEngine::Feed(int16_t index) {
 void LauncherEngine::Register(int16_t index, const std::wstring &filePath) {
   std::lock_guard<std::mutex> guard(launcherEngineMutex);
 
-  if (index < 0 || index > mMaxReaders || filePath == nullptr) {
+  if (index < 0 || index > mMaxReaders || filePath.empty()) {
     return;
   }
 
