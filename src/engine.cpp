@@ -96,26 +96,31 @@ double LauncherEngine::Read() {
   return result;
 }
 
-void LauncherEngine::Feed(int16_t index) {
+bool LauncherEngine::Feed(int16_t waveIndex) {
   std::lock_guard<std::mutex> guard(mMutex);
 
+  if (waveIndex < 0 || waveIndex > mMaxWaves - 1) {
+    return false;
+  }
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
       mReaders[i]->FadeOut();
     }
   }
 
-  mReaders[mIndex] = new WaveReader(mWaves[index], mCurrentChannel);
+  mReaders[mIndex] = new WaveReader(mWaves[waveIndex], mCurrentChannel);
   mReaders[mIndex]->SetTargetSamplesPerSec(mTargetSamplesPerSec);
 
   mIndex = (mIndex + 1) % mMaxReaders;
   mCompleted = false;
+
+  return true;
 }
 
-bool LauncherEngine::Register(int16_t index, const std::wstring &filePath) {
+bool LauncherEngine::Register(int16_t waveIndex, const std::wstring &filePath) {
   std::lock_guard<std::mutex> guard(mMutex);
 
-  if (index < 0 || index > mMaxWaves || filePath.empty()) {
+  if (waveIndex < 0 || waveIndex > mMaxWaves - 1 || filePath.empty()) {
     return false;
   }
 

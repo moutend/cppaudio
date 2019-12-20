@@ -32,8 +32,8 @@ public:
   void Next();
   double Read();
 
-  void Feed(int16_t index);
-  bool Register(int16_t index, const std::wstring &filePath);
+  bool Feed(int16_t waveIndex);
+  bool Register(int16_t waveIndex, const std::wstring &filePath);
 
 private:
   std::mutex mMutex;
