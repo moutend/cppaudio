@@ -21,7 +21,7 @@ public:
 
 class LauncherEngine : public Engine {
 public:
-  LauncherEngine();
+  LauncherEngine(int16_t maxWaves);
   ~LauncherEngine();
 
   void Reset();
@@ -43,8 +43,8 @@ private:
 
   bool mCompleted = false;
   int16_t mIndex = 0;
-  int16_t mMaxWaves = 256;
-  int16_t mMaxReaders = 16;
+  int16_t mMaxWaves = 0;
+  int16_t mMaxReaders = 32;
   int16_t mCurrentChannel = 0;
   int32_t mTargetSamplesPerSec = 44100;
 };
@@ -71,7 +71,7 @@ private:
   Reader **mReaders = nullptr;
 
   bool mCompleted = false;
-  int16_t mMaxReaders = 16;
+  int16_t mMaxReaders = 32;
 
   int32_t mTargetSamplesPerSec = 44100;
   int16_t mCurrentChannel = 0;
