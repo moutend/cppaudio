@@ -112,16 +112,18 @@ void LauncherEngine::Feed(int16_t index) {
   mCompleted = false;
 }
 
-void LauncherEngine::Register(int16_t index, const std::wstring &filePath) {
+bool LauncherEngine::Register(int16_t index, const std::wstring &filePath) {
   std::lock_guard<std::mutex> guard(mMutex);
 
-  if (index < 0 || index > mMaxReaders || filePath.empty()) {
+  if (index < 0 || index > mMaxWaves || filePath.empty()) {
     return;
   }
 
   delete mWaves[index];
   mWaves[index] = nullptr;
   mWaves[index] = new Wave(filePath);
+
+  return true;
 }
 
 RingEngine::RingEngine() {
