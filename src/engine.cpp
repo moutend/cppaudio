@@ -116,7 +116,7 @@ bool LauncherEngine::Register(int16_t index, const std::wstring &filePath) {
   std::lock_guard<std::mutex> guard(mMutex);
 
   if (index < 0 || index > mMaxWaves || filePath.empty()) {
-    return;
+    return false;
   }
 
   delete mWaves[index];
