@@ -124,9 +124,9 @@ bool LauncherEngine::Register(int16_t waveIndex, const std::wstring &filePath) {
     return false;
   }
 
-  delete mWaves[index];
-  mWaves[index] = nullptr;
-  mWaves[index] = new Wave(filePath);
+  delete mWaves[waveIndex];
+  mWaves[waveIndex] = nullptr;
+  mWaves[waveIndex] = new Wave(filePath);
 
   return true;
 }
