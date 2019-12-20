@@ -3,7 +3,8 @@
 #include "engine.h"
 
 namespace PCMAudio {
-LauncherEngine::LauncherEngine() {
+LauncherEngine::LauncherEngine(int16_t maxWaves) {
+  mMaxWaves = maxWaves;
   mWaves = new Wave *[mMaxWaves] {};
   mReaders = new Reader *[mMaxReaders] {};
 }
