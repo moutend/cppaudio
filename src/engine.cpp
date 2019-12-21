@@ -96,6 +96,23 @@ double LauncherEngine::Read() {
   return result;
 }
 
+bool LauncherEngine::Sleep(double duration /* ms */) {
+  std::lock_guard<std::mutex> guard(mMutex);
+
+  for (int16_t i = 0; i < mMaxReaders; i++) {
+    if (mReaders[i] != nullptr) {
+      mReaders[i]->FadeOut();
+    }
+  }
+
+  mReaders[mIndex] = new SilentReader(mTargetSamplesPerSec, duration);
+
+  mIndex = (mIndex + 1) % mMaxReaders;
+  mCompleted = false;
+
+  return true;
+}
+
 bool LauncherEngine::Feed(int16_t waveIndex) {
   std::lock_guard<std::mutex> guard(mMutex);
 
