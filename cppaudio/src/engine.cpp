@@ -11,14 +11,18 @@ LauncherEngine::LauncherEngine(int16_t maxWaves) {
 LauncherEngine::~LauncherEngine() {
   std::lock_guard<std::mutex> guard(mMutex);
 
-  for (int16_t i = 0; i < mMaxReaders; i++) {
+  for (int16_t i = 0; i < mMaxWaves; i++) {
     delete mWaves[i];
     mWaves[i] = nullptr;
-    mReaders[i] = nullptr;
   }
 
   delete[] mWaves;
   mWaves = nullptr;
+
+  for (int16_t i = 0; i < mMaxReaders; i++) {
+    delete mReaders[i];
+    mReaders[i] = nullptr;
+  }
 
   delete[] mReaders;
   mReaders = nullptr;
