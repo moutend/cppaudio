@@ -3,26 +3,56 @@
 #include <iostream>
 
 int main() {
-  PCMAudio::LauncherEngine *engine = new PCMAudio::LauncherEngine(10);
+  std::ifstream input("/tmp/audio.wav", std::ios::binary | std::ios::in);
+  std::streampos inputLength{};
 
-  std::streampos waveLength{};
-  std::ifstream wav("/tmp/audio.wav", std::ios::binary | std::ios::in);
-
-  wav.seekg(0, std::ios::end);
-  waveLength = wav.tellg();
-  wav.seekg(0, std::ios::beg);
+  input.seekg(0, std::ios::end);
+  inputLength = input.tellg();
+  input.seekg(0, std::ios::beg);
 
   size_t bufferLength{};
-  bufferLength = static_cast<size_t>(waveLength);
-  char *buffer = new char[bufferLength]{+1};
-  wav.read(buffer, bufferLength);
+  bufferLength = static_cast<size_t>(inputLength);
+  char *buffer = new char[bufferLength]{};
+
+  input.read(buffer, bufferLength);
+
+  PCMAudio::LauncherEngine *engine = new PCMAudio::LauncherEngine(10);
+  engine->SetTargetSamplesPerSec(44100);
 
   if (!engine->Register(0, buffer, bufferLength)) {
     return -1;
   }
 
-  delete engine;
-  engine = nullptr;
+  int bytesPerSample = 4;
+  int samples = 44100 * 10;
+  char *pData = new char[samples * bytesPerSample]{};
 
-  return 0;
-}
+    for (int i = 0; i < samples; i++) {
+      if (i == 0) {
+        engine->Feed(0);
+      }
+
+      double f64 = engine->Read();
+      int32_t s32 = static_cast<int32_t>(f64);
+      for (int j = 0; j < bytesPerSample; j++) {
+        pData[bytesPerSample * i + bytesPerSample - 1 - j] =
+            s32 >> (8 * (bytesPerSample - 1 - j)) & 0xFF;
+      }
+
+      engine->Next();
+    }
+
+    std::ofstream output("output.raw", std::ofstream::binary);
+    output.write(pData, samples * bytesPerSample);
+    output.close();
+
+    delete engine;
+    engine = nullptr;
+
+    delete[] buffer;
+    buffer = nullptr;
+
+    input.close();
+
+    return 0;
+  }
