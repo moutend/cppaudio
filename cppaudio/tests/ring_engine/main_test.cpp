@@ -3,7 +3,7 @@
 #include <iostream>
 
 int main() {
-  std::ifstream input("/tmp/audio.wav", std::ios::binary | std::ios::in);
+  std::ifstream input("../assets/audio.wav", std::ios::binary | std::ios::in);
   std::streampos inputLength{};
 
   input.seekg(0, std::ios::end);
