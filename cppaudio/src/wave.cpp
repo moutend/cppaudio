@@ -1,12 +1,11 @@
+#include <cppaudio/wave.h>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
-#include "wave.h"
-
 namespace PCMAudio {
-Wave::Wave(const std::wstring &filePath) {
+Wave::Wave(const std::string &filePath) {
   std::ifstream input(filePath.c_str(), std::ios::binary | std::ios::in);
 
   if (!input.is_open()) {

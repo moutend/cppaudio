@@ -1,6 +1,5 @@
+#include <cppaudio/engine.h>
 #include <mutex>
-
-#include "engine.h"
 
 namespace PCMAudio {
 LauncherEngine::LauncherEngine(int16_t maxWaves) {
@@ -134,7 +133,7 @@ bool LauncherEngine::Feed(int16_t waveIndex) {
   return true;
 }
 
-bool LauncherEngine::Register(int16_t waveIndex, const std::wstring &filePath) {
+bool LauncherEngine::Register(int16_t waveIndex, const std::string &filePath) {
   std::lock_guard<std::mutex> guard(mMutex);
 
   if (waveIndex < 0 || waveIndex > mMaxWaves - 1 || filePath.empty()) {

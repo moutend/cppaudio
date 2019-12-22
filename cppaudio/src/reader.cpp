@@ -1,8 +1,8 @@
 #include <cmath>
+#include <cppaudio/reader.h>
 #include <cstring>
 #include <iostream>
 
-#include "reader.h"
 namespace PCMAudio {
 WaveReader::WaveReader(Wave *&wave, int32_t delayCount) {
   mWave = wave;

@@ -7,7 +7,7 @@
 namespace PCMAudio {
 class Wave {
 public:
-  Wave(const std::wstring &filePath);
+  Wave(const std::string &filePath);
   Wave(char *buffer, size_t bufferLength);
   ~Wave();
 
