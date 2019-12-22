@@ -8,6 +8,7 @@ namespace PCMAudio {
 class Wave {
 public:
   Wave(const char *buffer, size_t bufferLength);
+  Wave(std::istream &input);
   ~Wave();
 
   int16_t FormatTag();
@@ -16,11 +17,13 @@ public:
   int32_t AvgBytesPerSec();
   int16_t BlockAlign();
   int16_t BitsPerSample();
+
   std::streamsize DataLength();
   char *Data();
+  bool HasLoaded();
 
 private:
-  int32_t initialize(std::istream &input);
+  void load(std::istream &input);
 
   int16_t mFormatTag;
   int16_t mChannels;
@@ -31,5 +34,6 @@ private:
 
   std::streamsize mDataLength;
   char *mData = nullptr;
+  bool mLoaded = false;
 };
 } // namespace PCMAudio

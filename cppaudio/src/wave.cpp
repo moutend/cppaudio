@@ -12,21 +12,12 @@ Wave::Wave(const char *buffer, size_t bufferLength) {
 
   std::istringstream input(std::string(buffer, bufferLength));
 
-  initialize(input);
+  load(input);
 }
 
-Wave::~Wave() { delete[] mData; }
+Wave::Wave(std::istream &input) { load(input); }
 
-int16_t Wave::FormatTag() { return mFormatTag; }
-int16_t Wave::Channels() { return mChannels; }
-int32_t Wave::SamplesPerSec() { return mSamplesPerSec; }
-int32_t Wave::AvgBytesPerSec() { return mAvgBytesPerSec; }
-int16_t Wave::BlockAlign() { return mBlockAlign; }
-int16_t Wave::BitsPerSample() { return mBitsPerSample; }
-std::streamsize Wave::DataLength() { return mDataLength; }
-char *Wave::Data() { return mData; }
-
-int32_t Wave::initialize(std::istream &input) {
+void Wave::load(std::istream &input) {
   char chunkNameStr[5]{}; // null terminated C-style string.
   char dwordStr[4]{};     // buffer for DWORD type
   char wordStr[2]{};      // buffer for WORD type
@@ -36,7 +27,7 @@ int32_t Wave::initialize(std::istream &input) {
   input.read(chunkNameStr, std::streamsize(sizeof(char) * 4));
 
   if (std::strcmp(chunkNameStr, "RIFF") != 0) {
-    return 2;
+    return;
   }
 
   input.read(dwordStr, std::streamsize(sizeof(char) * 4));
@@ -46,20 +37,20 @@ int32_t Wave::initialize(std::istream &input) {
     // Adding size of 'RIFF' + chunk size
     fileSize = chunkSize + 8;
   } else {
-    return 5;
+    return;
   }
 
   input.read(chunkNameStr, std::streamsize(sizeof(char) * 4));
 
   if (std::strcmp(chunkNameStr, "WAVE") != 0) {
-    return -4;
+    return;
   }
   while (true) {
     if (input.tellg() == fileSize) {
       break;
     }
     if (input.fail()) {
-      return 6;
+      return;
     }
 
     input.read(chunkNameStr, std::streamsize(sizeof(char) * 4));
@@ -100,6 +91,19 @@ int32_t Wave::initialize(std::istream &input) {
     }
   }
 
-  return 0;
+  mLoaded = true;
 }
+
+Wave::~Wave() { delete[] mData; }
+
+int16_t Wave::FormatTag() { return mFormatTag; }
+int16_t Wave::Channels() { return mChannels; }
+int32_t Wave::SamplesPerSec() { return mSamplesPerSec; }
+int32_t Wave::AvgBytesPerSec() { return mAvgBytesPerSec; }
+int16_t Wave::BlockAlign() { return mBlockAlign; }
+int16_t Wave::BitsPerSample() { return mBitsPerSample; }
+
+std::streamsize Wave::DataLength() { return mDataLength; }
+char *Wave::Data() { return mData; }
+bool Wave::HasLoaded() { return mLoaded; }
 } // namespace PCMAudio

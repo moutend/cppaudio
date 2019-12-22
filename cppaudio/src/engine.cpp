@@ -127,6 +127,9 @@ bool LauncherEngine::Feed(int16_t waveIndex) {
       mReaders[i]->FadeOut();
     }
   }
+  if (mWaves[waveIndex] == nullptr) {
+    return false;
+  }
 
   mReaders[mIndex] = new WaveReader(mWaves[waveIndex], mCurrentChannel);
   mReaders[mIndex]->SetTargetSamplesPerSec(mTargetSamplesPerSec);
@@ -148,6 +151,11 @@ bool LauncherEngine::Register(int16_t waveIndex, const char *buffer,
   delete mWaves[waveIndex];
   mWaves[waveIndex] = nullptr;
   mWaves[waveIndex] = new Wave(buffer, bufferLength);
+
+  if (!mWaves[waveIndex]->HasLoaded()) {
+    delete mWaves[waveIndex];
+    mWaves[waveIndex] = nullptr;
+  }
 
   return true;
 }

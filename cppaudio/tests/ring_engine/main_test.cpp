@@ -24,7 +24,7 @@ int main() {
   char *pData = new char[samples * bytesPerSample]{};
 
   for (int i = 0; i < samples; i++) {
-    if (i % 44100 == 0) {
+    if (i % 11025 == 0) {
       engine->Feed(buffer, bufferLength);
     }
 
