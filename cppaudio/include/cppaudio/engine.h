@@ -34,7 +34,7 @@ public:
 
   bool Sleep(double duration /* ms */);
   bool Feed(int16_t waveIndex);
-  bool Register(int16_t waveIndex, const std::string &filePath);
+  bool Register(int16_t waveIndex, const char *buffer, size_t bufferLength);
 
 private:
   std::mutex mMutex;

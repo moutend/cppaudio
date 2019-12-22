@@ -5,17 +5,11 @@
 #include <sstream>
 
 namespace PCMAudio {
-Wave::Wave(const std::string &filePath) {
-  std::ifstream input(filePath.c_str(), std::ios::binary | std::ios::in);
-
-  if (!input.is_open()) {
+Wave::Wave(const char *buffer, size_t bufferLength) {
+  if (buffer == nullptr || bufferLength == 0) {
     return;
   }
 
-  initialize(input);
-}
-
-Wave::Wave(char *buffer, size_t bufferLength) {
   std::istringstream input(std::string(buffer, bufferLength));
 
   initialize(input);

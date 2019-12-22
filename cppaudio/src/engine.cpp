@@ -133,16 +133,17 @@ bool LauncherEngine::Feed(int16_t waveIndex) {
   return true;
 }
 
-bool LauncherEngine::Register(int16_t waveIndex, const std::string &filePath) {
+bool LauncherEngine::Register(int16_t waveIndex, const char *buffer,
+                              size_t bufferLength) {
   std::lock_guard<std::mutex> guard(mMutex);
 
-  if (waveIndex < 0 || waveIndex > mMaxWaves - 1 || filePath.empty()) {
+  if (waveIndex < 0 || waveIndex > mMaxWaves - 1) {
     return false;
   }
 
   delete mWaves[waveIndex];
   mWaves[waveIndex] = nullptr;
-  mWaves[waveIndex] = new Wave(filePath);
+  mWaves[waveIndex] = new Wave(buffer, bufferLength);
 
   return true;
 }
