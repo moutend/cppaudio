@@ -4,24 +4,15 @@
 
 int main() {
   std::ifstream input("../assets/audio.wav", std::ios::binary | std::ios::in);
-  std::streampos inputLength{};
-
-  input.seekg(0, std::ios::end);
-  inputLength = input.tellg();
-  input.seekg(0, std::ios::beg);
-
-  size_t bufferLength{};
-  bufferLength = static_cast<size_t>(inputLength);
-  char *buffer = new char[bufferLength]{};
-
-  input.read(buffer, bufferLength);
 
   PCMAudio::LauncherEngine *engine = new PCMAudio::LauncherEngine(10);
   engine->SetTargetSamplesPerSec(44100);
 
-  if (!engine->Register(0, buffer, bufferLength)) {
+  if (!engine->Register(0, input)) {
     return -1;
   }
+
+  input.close();
 
   int bytesPerSample = 4;
   int samples = 44100 * 10;
@@ -29,7 +20,7 @@ int main() {
 
   for (int i = 0; i < samples; i++) {
     if (i % 11025 == 0) {
-      engine->Feed(i % 2);
+      engine->Feed(0);
     }
 
     double f64 = engine->Read();
@@ -48,11 +39,6 @@ int main() {
 
   delete engine;
   engine = nullptr;
-
-  delete[] buffer;
-  buffer = nullptr;
-
-  input.close();
 
   return 0;
 }

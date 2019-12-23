@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <iostream>
 #include <mutex>
-#include <string>
 
 #include "reader.h"
 #include "wave.h"
@@ -34,7 +34,7 @@ public:
 
   bool Sleep(double duration /* ms */);
   bool Feed(int16_t waveIndex);
-  bool Register(int16_t waveIndex, const char *buffer, size_t bufferLength);
+  bool Register(int16_t waveIndex, std::istream &input);
 
 private:
   std::mutex mMutex;

@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <iostream>
-#include <string>
 
 namespace PCMAudio {
 class Wave {

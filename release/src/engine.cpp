@@ -140,8 +140,7 @@ bool LauncherEngine::Feed(int16_t waveIndex) {
   return true;
 }
 
-bool LauncherEngine::Register(int16_t waveIndex, const char *buffer,
-                              size_t bufferLength) {
+bool LauncherEngine::Register(int16_t waveIndex, std::istream &input) {
   std::lock_guard<std::mutex> guard(mMutex);
 
   if (waveIndex < 0 || waveIndex > mMaxWaves - 1) {
@@ -150,7 +149,7 @@ bool LauncherEngine::Register(int16_t waveIndex, const char *buffer,
 
   delete mWaves[waveIndex];
   mWaves[waveIndex] = nullptr;
-  mWaves[waveIndex] = new Wave(buffer, bufferLength);
+  mWaves[waveIndex] = new Wave(input);
 
   if (!mWaves[waveIndex]->HasLoaded()) {
     delete mWaves[waveIndex];
