@@ -34,6 +34,16 @@ msbuild all.vcxproj # Windows
 xcodebuild          # Mac OSX
 ```
 
+### Test
+
+```console
+mkdir build
+cd build
+cmake -DBUILD_TESTS ..
+make all
+ctest --verbose
+```
+
 ## LICENSE
 
 MIT
