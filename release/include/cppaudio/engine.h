@@ -42,12 +42,14 @@ private:
   Wave **mWaves = nullptr;
   Reader **mReaders = nullptr;
 
+  int16_t mTargetChannels = 2;
+  int32_t mTargetSamplesPerSec = 44100;
+
   bool mCompleted = false;
   int16_t mIndex = 0;
   int16_t mMaxWaves = 0;
   int16_t mMaxReaders = 32;
   int16_t mCurrentChannel = 0;
-  int32_t mTargetSamplesPerSec = 44100;
 };
 
 class RingEngine : public Engine {

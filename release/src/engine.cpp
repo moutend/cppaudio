@@ -75,12 +75,18 @@ bool LauncherEngine::IsCompleted() { return mCompleted; }
 void LauncherEngine::Next() {
   std::lock_guard<std::mutex> guard(mMutex);
 
+  mCompleted = true;
   mCurrentChannel = (mCurrentChannel + 1) % 2;
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
       mReaders[i]->Next();
-      mCompleted = mCompleted | mReaders[i]->IsCompleted();
+      mCompleted = false;
+
+      if (mReaders[i]->IsCompleted()) {
+        delete mReaders[i];
+        mReaders[i] = nullptr;
+      }
     }
   }
 }
@@ -107,8 +113,8 @@ bool LauncherEngine::Sleep(double duration /* ms */) {
       mReaders[i]->FadeOut();
     }
   }
-
-  mReaders[mIndex] = new SilentReader(mTargetSamplesPerSec, duration);
+  mReaders[mIndex] =
+      new SilentReader(mTargetChannels, mTargetSamplesPerSec, duration);
 
   mIndex = (mIndex + 1) % mMaxReaders;
   mCompleted = false;

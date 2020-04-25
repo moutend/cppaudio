@@ -50,7 +50,7 @@ private:
 
 class SilentReader : public Reader {
 public:
-  SilentReader(double samplesPerSec, double duration /* ms*/);
+  SilentReader(int16_t channels, double samplesPerSec, double duration /* ms*/);
 
   void SetTargetSamplesPerSec(int32_t samples);
   void FadeIn();

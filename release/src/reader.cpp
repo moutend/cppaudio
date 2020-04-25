@@ -105,8 +105,10 @@ int32_t WaveReader::ReadInt32t(int32_t index) {
   return s32 << (8 * (4 - mBytesPerSample));
 }
 
-SilentReader::SilentReader(double samplesPerSec, double duration /* ms */)
-    : mSamplesPerSec(samplesPerSec), mDuration(duration) {}
+SilentReader::SilentReader(int16_t channels, double samplesPerSec,
+                           double duration /* ms */)
+    : mChannels(channels), mSamplesPerSec(samplesPerSec), mDuration(duration),
+      mSamples(channels * samplesPerSec * duration / 1000.0) {}
 
 void SilentReader::SetTargetSamplesPerSec(int32_t samples) {
   mSamplesPerSec = samples;
@@ -127,6 +129,7 @@ void SilentReader::Next() {
   mSampleCount += 1.0;
 
   if (mSampleCount > mSamples - 1) {
+    printf("@@@Next %.1f %.1f\n", mSampleCount, mSamples);
     mCompleted = true;
   }
 }
