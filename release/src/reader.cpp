@@ -4,90 +4,82 @@
 #include <iostream>
 
 namespace PCMAudio {
-WaveReader::WaveReader(Wave *&wave, int32_t delayCount) {
+WaveReader::WaveReader(Wave *&wave)
+    : mWave(wave), mTargetChannels(0), mTargetSamplesPerSec(0),
+      mSourceChannels(0), mSourceSamplesPerSec(0), mSourceBytesPerSample(0),
+      mSourceTotalBytes(0), mSourceTotalSamples(0), mChannel(0), mDiff(0.0),
+      mDiffSum(0.0), mVolume(1.0), mVolumeFactor(0.0), mPause(false) {
+  if (wave == nullptr) {
+    return;
+  }
+
   mWave = wave;
-  mDelayCount = delayCount;
-
-  mBytesPerSample = mWave->BitsPerSample() / 8;
-  mBytesPerSec = mBytesPerSample * mWave->Channels();
-  mSamples = static_cast<double>(wave->DataLength()) / mBytesPerSec;
-  mTargetSamplesPerSec = wave->SamplesPerSec();
+  mSourceChannels = mWave->Channels();
+  mSourceSamplesPerSec = mWave->SamplesPerSec();
+  mSourceBytesPerSample = mWave->BitsPerSample() / 8;
+  mSourceTotalBytes = static_cast<int32_t>(mWave->DataLength());
+  mSourceTotalSamples = mSourceTotalBytes / mSourceBytesPerSample;
 }
 
-void WaveReader::SetTargetSamplesPerSec(int32_t samples) {
-  mTargetSamplesPerSec = static_cast<double>(mWave->SamplesPerSec());
-  mDiff = mTargetSamplesPerSec / samples;
+WaveReader::~WaveReader() {}
+
+void WaveReader::SetFormat(int16_t channels, int32_t samplesPerSec) {
+  mTargetChannels = channels;
+  mTargetSamplesPerSec = samplesPerSec;
+  mDiff = static_cast<double>(mSourceSamplesPerSec) /
+          static_cast<double>(mTargetSamplesPerSec);
 }
 
-void WaveReader::FadeOut() {
-  // For now, use 4 ms (3.90625 ms) as a fade in / out duration.
-  mFadeFactor = -1024.0 / mTargetSamplesPerSec;
-}
+void WaveReader::Pause() { mVolumeFactor = -0.1; }
 
-void WaveReader::FadeIn() {
-  // For now, use 4 ms (3.90625 ms) as a fade in / out duration.
-  mFadeFactor = 1024.0 / mTargetSamplesPerSec;
+void WaveReader::Restart() {
   mPause = false;
+  mVolumeFactor = 0.1;
 }
 
-bool WaveReader::IsCompleted() { return mCompleted; }
+bool WaveReader::IsPause() { return mPause; }
+
+bool WaveReader::IsDone() {
+  return static_cast<int32_t>(floor(mDiffSum)) * mSourceChannels >
+         mSourceTotalSamples - 1;
+}
 
 void WaveReader::Next() {
-  if (mDelayCount > 0) {
-    mDelayCount -= 1;
-    return;
-  }
-  if (mPause || mCompleted) {
+  if (mPause || IsDone()) {
     return;
   }
 
-  mSkipCount += 1;
+  mChannel = (mChannel + 1) % mTargetChannels;
 
-  if (mSkipCount <= mTargetChannels - mWave->Channels()) {
-    return;
+  if (mChannel == 0) {
+    mDiffSum += mDiff;
+    mVolume = mVolume + mVolumeFactor;
   }
-
-  mSkipCount = 0;
-  mFadeGain += mFadeFactor;
-  mChannelCount = (mChannelCount + 1) % mWave->Channels();
-
-  if (mChannelCount == 0) {
-    mDiffCount += mDiff;
+  if (mVolume > 1.0) {
+    mVolume = 1.0;
+    mVolumeFactor = 0.0;
   }
-  if (mFadeGain < 0.0) {
-    mFadeFactor = 0.0;
-    mFadeGain = 0.0;
+  if (mVolume < 0.0) {
+    mVolume = 0.0;
+    mVolumeFactor = 0.0;
+
     mPause = true;
   }
-  if (mFadeGain > 1.0) {
-    mFadeFactor = 0.0;
-    mFadeGain = 1.0;
-  }
-  if (mDiffCount > mSamples - 1) {
-    mCompleted = true;
-  }
 }
 
-double WaveReader::Read() {
-  if (mPause || mDelayCount > 0 || mCompleted) {
-    return 0.0;
-  }
+int32_t WaveReader::Read() {
+  double ratio = mDiffSum - floor(mDiffSum);
+  int32_t base = static_cast<int32_t>(floor(mDiffSum)) * mSourceChannels;
+  int32_t channel = mChannel % mSourceChannels;
+  int32_t index1 =
+      mSourceBytesPerSample * channel + mSourceBytesPerSample * base;
+  int32_t index2 = mSourceBytesPerSample * channel +
+                   mSourceBytesPerSample * (base + mSourceChannels);
+  int32_t value1 = index1 < mSourceTotalBytes ? ReadInt32t(index1) : 0;
+  int32_t value2 = index2 < mSourceTotalBytes ? ReadInt32t(index2) : 0;
+  double result = mVolume * (value1 * (1.0 - ratio) + value2 * ratio);
 
-  double diff = mDiffCount - floor(mDiffCount);
-  double index = mChannelCount + floor(mDiffCount) * mWave->Channels() + diff;
-
-  return ReadDouble(index);
-}
-
-double WaveReader::ReadDouble(double index) {
-  int32_t i1 = static_cast<int32_t>(floor(index));
-  int32_t i2 = i1 + mWave->Channels();
-
-  double ratio = index - i1;
-  double v1 = ReadInt32t(i1 * mBytesPerSample);
-  double v2 = ReadInt32t(i2 * mBytesPerSample);
-
-  return mFadeGain * (v1 + (v2 - v1) * ratio);
+  return static_cast<int32_t>(result);
 }
 
 /*
@@ -96,40 +88,61 @@ double WaveReader::ReadDouble(double index) {
  * 16 bit value 0x1234 will converted to 0x12340000.
  * 24 bit value 0x123456 will converted to 0x12345600.
  * 32 bit value 0x12345678 stays the same.
+ *
+ * Note: index is based on bytes, not samples.
  */
 int32_t WaveReader::ReadInt32t(int32_t index) {
-  int32_t s32{0};
+  int32_t s32{};
 
-  std::memcpy(&s32, mWave->Data() + index, mBytesPerSample);
+  std::memcpy(&s32, mWave->Data() + index, mSourceBytesPerSample);
 
-  return s32 << (8 * (4 - mBytesPerSample));
+  return s32 << (8 * (4 - mSourceBytesPerSample));
 }
 
-SilentReader::SilentReader(double samplesPerSec, double duration /* ms */)
-    : mSamplesPerSec(samplesPerSec), mDuration(duration) {}
+SilentReader::SilentReader(double duration /* ms */)
+    : mTargetChannels(0), mTargetSamplesPerSec(0), mTargetTotalSamples(0),
+      mDiff(1.0), mDiffSum(0.0), mDuration(duration), mPause(false) {}
 
-void SilentReader::SetTargetSamplesPerSec(int32_t samples) {
-  mSamplesPerSec = samples;
-  mSamples = mChannels * mSamplesPerSec * mDuration / 1000.0;
+SilentReader::~SilentReader() {}
+
+void SilentReader::SetFormat(int16_t channels, int32_t samplesPerSec) {
+  mDuration = mDuration - static_cast<double>(floor(mDiffSum)) /
+                              static_cast<double>(samplesPerSec) * 1000.0;
+
+  if (mDuration < 0.0) {
+    mDuration = 0.0;
+  }
+
+  mTargetChannels = channels;
+  mTargetSamplesPerSec = samplesPerSec;
+  mTargetTotalSamples =
+      static_cast<double>(mTargetChannels * mTargetSamplesPerSec) * mDuration /
+      1000.0;
 }
 
-void SilentReader::FadeIn() {}
+void SilentReader::Restart() { mPause = false; }
 
-void SilentReader::FadeOut() {}
+void SilentReader::Pause() { mPause = true; }
 
-bool SilentReader::IsCompleted() { return mCompleted; }
+bool SilentReader::IsPause() { return mPause; }
+
+bool SilentReader::IsDone() {
+  return mDuration < 0.0 ||
+         static_cast<int32_t>(floor(mDiffSum)) * mTargetChannels >
+             mTargetTotalSamples - 1;
+}
 
 void SilentReader::Next() {
-  if (mDuration < 0.0) {
+  if (mPause || IsDone()) {
     return;
   }
 
-  mSampleCount += 1.0;
+  mChannel = (mChannel + 1) % mTargetChannels;
 
-  if (mSampleCount > mSamples - 1) {
-    mCompleted = true;
+  if (mChannel == 0) {
+    mDiffSum += mDiff;
   }
 }
 
-double SilentReader::Read() { return 0.0; }
+int32_t SilentReader::Read() { return 0; }
 } // namespace PCMAudio
