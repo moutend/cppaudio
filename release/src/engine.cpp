@@ -83,6 +83,11 @@ void LauncherEngine::Next() {
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
       mReaders[i]->Next();
+
+      if (mReaders[i]->IsDone()) {
+        delete mReaders[i];
+        mReaders[i] = nullptr;
+      }
     }
   }
 }

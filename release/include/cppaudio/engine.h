@@ -10,8 +10,6 @@
 namespace PCMAudio {
 class Engine {
 public:
-  virtual ~Engine() = 0;
-
   virtual void Reset() = 0;
   virtual void SetFormat(int16_t channels, int32_t samplesPerSec) = 0;
   virtual void FadeIn() = 0;

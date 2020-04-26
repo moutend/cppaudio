@@ -1,3 +1,3 @@
-# add_subdirectory(launcher_engine)
+add_subdirectory(TestLauncherEngine)
 # add_subdirectory(ring_engine)
-add_subdirectory(BlankReader)
+#add_subdirectory(BlankReader)

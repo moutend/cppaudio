@@ -18,8 +18,7 @@ WaveReader::WaveReader(Wave *&wave)
   mSourceSamplesPerSec = mWave->SamplesPerSec();
   mSourceBytesPerSample = mWave->BitsPerSample() / 8;
   mSourceTotalBytes = static_cast<int32_t>(mWave->DataLength());
-  mSourceTotalSamples = static_cast<int32_t>(
-      mWave->DataLength() / mSourceChannels / mSourceBytesPerSample);
+  mSourceTotalSamples = mSourceTotalBytes / mSourceBytesPerSample;
 }
 
 WaveReader::~WaveReader() {}
@@ -36,7 +35,8 @@ void WaveReader::FadeIn() {}
 
 bool WaveReader::IsDone() {
   return mSourceChannels > 2 || mTargetChannels % 2 == 1 ||
-         floor(mDiffSum) * mSourceChannels > mSourceTotalSamples - 1;
+         static_cast<int32_t>(floor(mDiffSum)) * mSourceChannels >
+             mSourceTotalSamples - 1;
 }
 
 void WaveReader::Next() {
@@ -55,11 +55,13 @@ int32_t WaveReader::Read() {
   double ratio = mDiffSum - floor(mDiffSum);
   int32_t base = static_cast<int32_t>(floor(mDiffSum)) * mSourceChannels;
   int32_t channel = mChannel % mSourceChannels;
-  int32_t index1 = mSourceBytesPerSample * base;
-  int32_t index2 = mSourceBytesPerSample * (base + mSourceChannels);
+  int32_t index1 =
+      mSourceBytesPerSample * channel + mSourceBytesPerSample * base;
+  int32_t index2 = mSourceBytesPerSample * channel +
+                   mSourceBytesPerSample * (base + mSourceChannels);
   int32_t value1 = index1 < mSourceTotalBytes ? ReadInt32t(index1) : 0;
   int32_t value2 = index2 < mSourceTotalBytes ? ReadInt32t(index2) : 0;
-  double result = mVolume * (value1 * (1.0 - ratio) + value2 * ratio) / 2;
+  double result = mVolume * (value1 * (1.0 - ratio) + value2 * ratio);
 
   return static_cast<int32_t>(result);
 }
