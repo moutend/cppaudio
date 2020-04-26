@@ -10,46 +10,47 @@
 namespace PCMAudio {
 class Engine {
 public:
+  virtual ~Engine() = 0;
+
   virtual void Reset() = 0;
-  virtual void SetTargetSamplesPerSec(int32_t samples) = 0;
+  virtual void SetFormat(int16_t channels, int32_t samplesPerSec) = 0;
   virtual void FadeIn() = 0;
   virtual void FadeOut() = 0;
-  virtual bool IsCompleted() = 0;
+  virtual bool IsDone() = 0;
   virtual void Next() = 0;
   virtual double Read() = 0;
 };
 
 class LauncherEngine : public Engine {
 public:
-  LauncherEngine(int16_t maxWaves);
+  LauncherEngine(int16_t maxWaves, int16_t maxReaders);
   ~LauncherEngine();
 
   void Reset();
-  void SetTargetSamplesPerSec(int32_t samples);
+  virtual void SetFormat(int16_t channels, int32_t samplesPerSec);
   void FadeIn();
   void FadeOut();
-  bool IsCompleted();
+  bool IsDone();
   void Next();
   double Read();
 
-  bool Sleep(double duration /* ms */);
-  bool Feed(int16_t waveIndex);
-  bool Register(int16_t waveIndex, std::istream &input);
+  void Sleep(double duration /* ms */);
+  void Feed(int16_t waveIndex);
+  void Register(int16_t waveIndex, std::istream &input);
 
 private:
   std::mutex mMutex;
 
-  Wave **mWaves = nullptr;
-  Reader **mReaders = nullptr;
+  Wave **mWaves;
+  Reader **mReaders;
 
   int16_t mTargetChannels = 2;
-  int32_t mTargetSamplesPerSec = 44100;
+  int32_t mTargetSamplesPerSec;
 
-  bool mCompleted = false;
-  int16_t mIndex = 0;
-  int16_t mMaxWaves = 0;
-  int16_t mMaxReaders = 32;
-  int16_t mCurrentChannel = 0;
+  int16_t mChannel;
+  int16_t mIndex;
+  int16_t mMaxWaves;
+  int16_t mMaxReaders;
 };
 
 class RingEngine : public Engine {
@@ -58,10 +59,10 @@ public:
   ~RingEngine();
 
   void Reset();
-  void SetTargetSamplesPerSec(int32_t samples);
+  virtual void SetFormat(int16_t channels, int32_t samplesPerSec);
   void FadeIn();
   void FadeOut();
-  bool IsCompleted();
+  bool IsDone();
   void Next();
   double Read();
 
@@ -70,14 +71,14 @@ public:
 private:
   std::mutex mMutex;
 
-  Wave **mWaves = nullptr;
-  Reader **mReaders = nullptr;
+  Wave **mWaves;
+  Reader **mReaders;
 
-  bool mCompleted = false;
-  int16_t mMaxReaders = 32;
+  int16_t mTargetChannels;
+  int32_t mTargetSamplesPerSec;
 
-  int32_t mTargetSamplesPerSec = 44100;
-  int16_t mCurrentChannel = 0;
-  int16_t mIndex = 0;
+  int16_t mChannel;
+  int16_t mMaxReaders;
+  int16_t mIndex;
 };
 } // namespace PCMAudio

@@ -2,8 +2,10 @@
 #include <mutex>
 
 namespace PCMAudio {
-LauncherEngine::LauncherEngine(int16_t maxWaves) {
-  mMaxWaves = maxWaves;
+LauncherEngine::LauncherEngine(int16_t maxWaves, int16_t maxReaders)
+    : mWaves(nullptr), mReaders(nullptr), mTargetChannels(0),
+      mTargetSamplesPerSec(0), mChannel(0), mIndex(0), mMaxWaves(maxWaves),
+      mMaxReaders(maxReaders) {
   mWaves = new Wave *[mMaxWaves] {};
   mReaders = new Reader *[mMaxReaders] {};
 }
@@ -28,24 +30,17 @@ LauncherEngine::~LauncherEngine() {
   mReaders = nullptr;
 }
 
-void LauncherEngine::Reset() {
+void LauncherEngine::Reset() {}
+
+void LauncherEngine::SetFormat(int16_t channels, int32_t samplesPerSec) {
   std::lock_guard<std::mutex> guard(mMutex);
 
-  mCompleted = false;
-
-  for (int16_t i = 0; i < mMaxReaders; i++) {
-    mReaders[i] = nullptr;
-  }
-}
-
-void LauncherEngine::SetTargetSamplesPerSec(int32_t samples) {
-  std::lock_guard<std::mutex> guard(mMutex);
-
-  mTargetSamplesPerSec = samples;
+  mTargetChannels = channels;
+  mTargetSamplesPerSec = samplesPerSec;
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
-      mReaders[i]->SetTargetSamplesPerSec(mTargetSamplesPerSec);
+      mReaders[i]->SetFormat(channels, samplesPerSec);
     }
   }
 }
@@ -70,23 +65,24 @@ void LauncherEngine::FadeOut() {
   }
 }
 
-bool LauncherEngine::IsCompleted() { return mCompleted; }
+bool LauncherEngine::IsDone() {
+  std::lock_guard<std::mutex> guard(mMutex);
+
+  for (int16_t i = 0; i < mMaxReaders; i++) {
+    if (mReaders[i] != nullptr) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 void LauncherEngine::Next() {
   std::lock_guard<std::mutex> guard(mMutex);
 
-  mCompleted = true;
-  mCurrentChannel = (mCurrentChannel + 1) % 2;
-
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
       mReaders[i]->Next();
-      mCompleted = false;
-
-      if (mReaders[i]->IsCompleted()) {
-        delete mReaders[i];
-        mReaders[i] = nullptr;
-      }
     }
   }
 }
@@ -105,52 +101,38 @@ double LauncherEngine::Read() {
   return result;
 }
 
-bool LauncherEngine::Sleep(double duration /* ms */) {
+void LauncherEngine::Sleep(double duration /* ms */) {
   std::lock_guard<std::mutex> guard(mMutex);
 
-  for (int16_t i = 0; i < mMaxReaders; i++) {
-    if (mReaders[i] != nullptr) {
-      mReaders[i]->FadeOut();
-    }
-  }
-  mReaders[mIndex] =
-      new SilentReader(mTargetChannels, mTargetSamplesPerSec, duration);
+  mReaders[mIndex] = new SilentReader(duration);
 
   mIndex = (mIndex + 1) % mMaxReaders;
-  mCompleted = false;
-
-  return true;
 }
 
-bool LauncherEngine::Feed(int16_t waveIndex) {
+void LauncherEngine::Feed(int16_t waveIndex) {
   std::lock_guard<std::mutex> guard(mMutex);
 
-  if (waveIndex < 0 || waveIndex > mMaxWaves - 1) {
-    return false;
+  if (waveIndex < 0 || waveIndex > mMaxWaves - 1 ||
+      mWaves[waveIndex] == nullptr) {
+    return;
   }
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
       mReaders[i]->FadeOut();
     }
   }
-  if (mWaves[waveIndex] == nullptr) {
-    return false;
-  }
 
-  mReaders[mIndex] = new WaveReader(mWaves[waveIndex], mCurrentChannel);
-  mReaders[mIndex]->SetTargetSamplesPerSec(mTargetSamplesPerSec);
+  mReaders[mIndex] = new WaveReader(mWaves[waveIndex]);
+  mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
 
   mIndex = (mIndex + 1) % mMaxReaders;
-  mCompleted = false;
-
-  return true;
 }
 
-bool LauncherEngine::Register(int16_t waveIndex, std::istream &input) {
+void LauncherEngine::Register(int16_t waveIndex, std::istream &input) {
   std::lock_guard<std::mutex> guard(mMutex);
 
   if (waveIndex < 0 || waveIndex > mMaxWaves - 1) {
-    return false;
+    return;
   }
 
   delete mWaves[waveIndex];
@@ -161,11 +143,11 @@ bool LauncherEngine::Register(int16_t waveIndex, std::istream &input) {
     delete mWaves[waveIndex];
     mWaves[waveIndex] = nullptr;
   }
-
-  return true;
 }
 
-RingEngine::RingEngine() {
+RingEngine::RingEngine()
+    : mWaves(nullptr), mReaders(nullptr), mMaxReaders(32), mTargetChannels(0),
+      mTargetSamplesPerSec(0), mChannel(0), mIndex(0) {
   mWaves = new Wave *[mMaxReaders] {};
   mReaders = new Reader *[mMaxReaders] {};
 }
@@ -185,24 +167,17 @@ RingEngine::~RingEngine() {
   mReaders = nullptr;
 }
 
-void RingEngine::Reset() {
+void RingEngine::Reset() {}
+
+void RingEngine::SetFormat(int16_t channels, int32_t samplesPerSec) {
   std::lock_guard<std::mutex> guard(mMutex);
 
-  mCompleted = false;
-
-  for (int16_t i = 0; i < mMaxReaders; i++) {
-    mReaders[i] = nullptr;
-  }
-}
-
-void RingEngine::SetTargetSamplesPerSec(int32_t samples) {
-  std::lock_guard<std::mutex> guard(mMutex);
-
-  mTargetSamplesPerSec = samples;
+  mTargetChannels = channels;
+  mTargetSamplesPerSec = samplesPerSec;
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
-      mReaders[i]->SetTargetSamplesPerSec(mTargetSamplesPerSec);
+      mReaders[i]->SetFormat(channels, samplesPerSec);
     }
   }
 }
@@ -240,24 +215,30 @@ void RingEngine::Feed(char *buffer, int32_t bufferLength) {
   mWaves[mIndex] = nullptr;
   mWaves[mIndex] = new Wave(buffer, bufferLength);
 
-  mReaders[mIndex] = new WaveReader(mWaves[mIndex], mCurrentChannel);
-  mReaders[mIndex]->SetTargetSamplesPerSec(mTargetSamplesPerSec);
+  mReaders[mIndex] = new WaveReader(mWaves[mIndex]);
+  mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
 
   mIndex = (mIndex + 1) % mMaxReaders;
-  mCompleted = false;
 }
 
-bool RingEngine::IsCompleted() { return mCompleted; }
+bool RingEngine::IsDone() {
+  std::lock_guard<std::mutex> guard(mMutex);
+
+  for (int16_t i = 0; i < mMaxReaders; i++) {
+    if (mReaders[i] != nullptr) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 void RingEngine::Next() {
   std::lock_guard<std::mutex> guard(mMutex);
 
-  mCurrentChannel = (mCurrentChannel + 1) % 2;
-
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
       mReaders[i]->Next();
-      mCompleted = mCompleted | mReaders[i]->IsCompleted();
     }
   }
 }

@@ -7,64 +7,71 @@
 namespace PCMAudio {
 class Reader {
 public:
-  virtual void SetTargetSamplesPerSec(int32_t samples) = 0;
+  virtual ~Reader() = 0;
+
+  virtual void SetFormat(int16_t channels, int32_t samplesPerSec) = 0;
   virtual void FadeIn() = 0;
   virtual void FadeOut() = 0;
-  virtual bool IsCompleted() = 0;
+  virtual bool IsDone() = 0;
   virtual void Next() = 0;
-  virtual double Read() = 0;
+  virtual int32_t Read() = 0;
 };
 
 class WaveReader : public Reader {
 public:
-  WaveReader(Wave *&wave, int32_t delayCount);
+  WaveReader(Wave *&wave);
+  ~WaveReader();
 
-  void SetTargetSamplesPerSec(int32_t samples);
+  void SetFormat(int16_t channels, int32_t samplesPerSec);
   void FadeIn();
   void FadeOut();
-  bool IsCompleted();
+  bool IsDone();
   void Next();
-  double Read();
+  int32_t Read();
 
   double ReadDouble(double index);
   int32_t ReadInt32t(int32_t index);
 
 private:
-  Wave *mWave = nullptr;
+  Wave *mWave;
 
-  bool mPause = false;
-  bool mCompleted = false;
-  int32_t mDelayCount = 0;
-  int16_t mBytesPerSec = 0;
-  int16_t mBytesPerSample = 0;
-  int16_t mChannelCount = 0;
-  int16_t mSkipCount = 0;
-  int16_t mTargetChannels = 2;
-  double mTargetSamplesPerSec = 44100.0;
-  double mDiff = 1.0;
-  double mDiffCount = 0.0;
-  double mSamples = 0.0;
-  double mFadeGain = 1.0;
-  double mFadeFactor = 0.0;
+  int16_t mTargetChannels;
+  int32_t mTargetSamplesPerSec;
+
+  int16_t mSourceChannels;
+  int32_t mSourceSamplesPerSec;
+  int16_t mSourceBytesPerSample;
+  int32_t mSourceTotalBytes;
+  int32_t mSourceTotalSamples;
+
+  int16_t mChannel;
+  double mDiff;
+  double mDiffSum;
+  double mVolume;
+  double mVolumeFactor;
+
+  bool mPause;
 };
 
 class SilentReader : public Reader {
 public:
-  SilentReader(int16_t channels, double samplesPerSec, double duration /* ms*/);
+  SilentReader(double duration /* ms*/);
+  ~SilentReader();
 
-  void SetTargetSamplesPerSec(int32_t samples);
+  void SetFormat(int16_t channels, int32_t samplesPerSec);
   void FadeIn();
   void FadeOut();
-  bool IsCompleted();
+  bool IsDone();
   void Next();
-  double Read();
+  int32_t Read();
 
 private:
-  bool mCompleted = false;
-  int16_t mChannels = 2;
-  double mSamplesPerSec = 44100.0;
-  double mDuration = 0.0;
-  double mSamples = 0.0;
-  double mSampleCount = 0.0;
+  int16_t mTargetChannels;
+  int32_t mTargetSamplesPerSec;
+
+  int32_t mSourceTotalSamples;
+  int32_t mSampleSum;
+
+  double mDuration;
 };
 } // namespace PCMAudio
