@@ -4,7 +4,7 @@
 #include <iostream>
 
 int main() {
-  std::ifstream input("../assets/__INPUT_FILE__.wav",
+  std::ifstream input("../assets/__INPUT_FILE__",
                       std::ios::binary | std::ios::in);
 
   int16_t outputBytesPerSample = 4;
