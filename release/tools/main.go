@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -66,6 +67,7 @@ func run() (err error) {
 	}
 
 	cmakeTexts := []string{}
+	playScripts := []string{"#!/bin/bash"}
 
 	for _, pattern := range patterns {
 		testName := fmt.Sprintf(
@@ -83,8 +85,20 @@ func run() (err error) {
 		}
 
 		cmakeTexts = append(cmakeTexts, fmt.Sprintf("add_subdirectory(%s)", testName))
+
+		generatedFilePath := filepath.Join("..", "build", "tests", testName, "output.raw")
+		playScripts = append(playScripts, fmt.Sprintf(
+			"play -r %d -c %d -t s%d %s\n",
+			pattern.Target.SamplesPerSec,
+			pattern.Target.Channels,
+			pattern.Target.BitsPerSample,
+			generatedFilePath,
+		))
 	}
 	if err := ioutil.WriteFile(filepath.Join("..", "tests", "CMakeLists.txt"), []byte(strings.Join(cmakeTexts, "\n")), 0644); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile("play.bash", []byte(strings.Join(playScripts, "\n")), 0644); err != nil {
 		return err
 	}
 
@@ -93,7 +107,7 @@ func run() (err error) {
 
 func createTest(testName string, pattern TestPattern) error {
 	outputDir := filepath.Join("..", "tests", testName)
-	// os.MkdirAll(outputDir, 0755)
+	os.MkdirAll(outputDir, 0755)
 	fmt.Println("CREATE", outputDir)
 
 	inputFileName := fmt.Sprintf(

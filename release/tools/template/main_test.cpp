@@ -10,7 +10,9 @@ int main() {
   int16_t outputBytesPerSample = 4;
   int16_t outputChannels = __OUTPUT_CHANNELS__;
   int32_t outputSamplesPerSec = __OUTPUT_SAMPLES_PER_SEC__;
-  int32_t outputSamples = outputChannels * outputSamplesPerSec * 15;
+
+  // Create an audio file whic duration is 10 sec.
+  int32_t outputSamples = outputChannels * outputSamplesPerSec * 10;
 
   PCMAudio::LauncherEngine *engine = new PCMAudio::LauncherEngine(10, 32);
   engine->SetFormat(outputChannels, outputSamplesPerSec);
