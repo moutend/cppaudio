@@ -15,8 +15,13 @@ set(CPPAUDIO_VERSION_REVISION 0)
 add_subdirectory(src)
 
 if(BUILD_TESTS)
+  file(REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/tests)
+  file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/tests)
+
+  execute_process(
+    COMMAND go run main.go
+    WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/tools"
+  )
+
   add_subdirectory(tests)
-  file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/build/tests/assets)
-  file(GLOB ASSET_FILES "${CMAKE_SOURCE_DIR}/tests/assets/*")
-  file(COPY ${ASSET_FILES} DESTINATION ${CMAKE_SOURCE_DIR}/build/tests/assets)
 endif()
