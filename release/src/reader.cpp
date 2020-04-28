@@ -26,7 +26,8 @@ WaveReader::~WaveReader() {}
 void WaveReader::SetFormat(int16_t channels, int32_t samplesPerSec) {
   mTargetChannels = channels;
   mTargetSamplesPerSec = samplesPerSec;
-  mDiff = mSourceSamplesPerSec / mTargetSamplesPerSec;
+  mDiff = static_cast<double>(mSourceSamplesPerSec) /
+          static_cast<double>(mTargetSamplesPerSec);
 }
 
 void WaveReader::FadeOut() {}
