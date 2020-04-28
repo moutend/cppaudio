@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -47,23 +49,10 @@ func run() (err error) {
 		return err
 	}
 
-	patterns := []TestPattern{}
+	patterns, err := readPatterns("pattern.csv")
 
-	for _, sourceSamplesPerSec := range []int{44100, 48000, 96000} {
-		for _, sourceChannel := range []int{1, 2} {
-			for _, sourceBitsPerSample := range []int{16, 24, 32} {
-				for _, targetSamplesPerSec := range []int{44100, 48000, 96000} {
-					for _, targetChannel := range []int{2, 6} {
-						for _, targetBitsPerSample := range []int{32} {
-							patterns = append(patterns, TestPattern{
-								Source: WaveFormat{sourceSamplesPerSec, sourceChannel, sourceBitsPerSample},
-								Target: WaveFormat{targetSamplesPerSec, targetChannel, targetBitsPerSample},
-							})
-						}
-					}
-				}
-			}
-		}
+	if err != nil {
+		return err
 	}
 
 	cmakeTexts := []string{}
@@ -103,6 +92,63 @@ func run() (err error) {
 	}
 
 	return nil
+}
+
+func readPatterns(path string) ([]TestPattern, error) {
+	csvFile, err := os.Open(path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer csvFile.Close()
+
+	patterns := []TestPattern{}
+	reader := csv.NewReader(csvFile)
+
+	for line := 1; ; line++ {
+		values, err := reader.Read()
+
+		if line == 1 {
+			continue // Skip reading header.
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("pattern.csv (line:%d) %v", line, err)
+		}
+		if len(values) != 6 {
+			return nil, fmt.Errorf("pattern.csv (line:%d) CSV must contains 6 columns", line)
+		}
+
+		var sourceSamplesPerSec, sourceChannels, sourceBitsPerSample, targetSamplesPerSec, targetChannels, targetBitsPerSample int
+
+		n, err := fmt.Sscanf(
+			strings.Join(values, ","),
+			"%d,%d,%d,%d,%d,%d",
+			&sourceSamplesPerSec,
+			&sourceChannels,
+			&sourceBitsPerSample,
+			&targetSamplesPerSec,
+			&targetChannels,
+			&targetBitsPerSample,
+		)
+
+		if err != nil {
+			return nil, fmt.Errorf("pattern.csv (line:%d) %v", line, err)
+		}
+		if n != 6 {
+			return nil, fmt.Errorf("pattern.csv (line:%d) csv failed to parse", line)
+		}
+
+		patterns = append(patterns, TestPattern{
+			Source: WaveFormat{sourceSamplesPerSec, sourceChannels, sourceBitsPerSample},
+			Target: WaveFormat{targetSamplesPerSec, targetChannels, targetBitsPerSample},
+		})
+	}
+
+	return patterns, nil
 }
 
 func createTest(testName string, pattern TestPattern) error {
