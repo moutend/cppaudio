@@ -91,8 +91,8 @@ SilentReader::SilentReader(double duration /* ms */)
 SilentReader::~SilentReader() {}
 
 void SilentReader::SetFormat(int16_t channels, int32_t samplesPerSec) {
-  mSourceTotalSamples =
-      mTargetChannels * mTargetSamplesPerSec * mDuration / 1000.0;
+  mSourceTotalSamples = mTargetChannels * mTargetSamplesPerSec *
+                        static_cast<int32_t>(mDuration / 1000.0);
 }
 
 void SilentReader::FadeIn() {}

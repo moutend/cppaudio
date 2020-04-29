@@ -1,13 +1,15 @@
 #include <cppaudio/engine.h>
+
 #include <mutex>
 
 namespace PCMAudio {
 LauncherEngine::LauncherEngine(int16_t maxWaves, int16_t maxReaders)
-    : mWaves(nullptr), mReaders(nullptr), mTargetChannels(0),
-      mTargetSamplesPerSec(0), mChannel(0), mIndex(0), mMaxWaves(maxWaves),
-      mMaxReaders(maxReaders) {
+    : mWaves(nullptr), mReaders(nullptr), mScheduledReaders(nullptr),
+      mTargetChannels(0), mTargetSamplesPerSec(0), mChannel(0), mIndex(0),
+      mMaxWaves(maxWaves), mMaxReaders(maxReaders) {
   mWaves = new Wave *[mMaxWaves] {};
   mReaders = new Reader *[mMaxReaders] {};
+  mScheduledReaders = new ReaderInfo *[mMaxReaders] {};
 }
 
 LauncherEngine::~LauncherEngine() {
@@ -80,7 +82,23 @@ bool LauncherEngine::IsDone() {
 void LauncherEngine::Next() {
   std::lock_guard<std::mutex> guard(mMutex);
 
+  mChannel = (mChannel + 1) % mTargetChannels;
+
   for (int16_t i = 0; i < mMaxReaders; i++) {
+    if (mScheduledReaders[i] != nullptr) {
+      if (mScheduledReaders[i]->DelayCount == 0) {
+        if (mScheduledReaders[i]->SleepDuration > 0.0) {
+          Sleep(mScheduledReaders[i]->SleepDuration);
+        } else {
+          Feed(mScheduledReaders[i]->WaveIndex);
+        }
+
+        delete mScheduledReaders[i];
+        mScheduledReaders[i] = nullptr;
+      } else {
+        mScheduledReaders[i]->DelayCount -= 1;
+      }
+    }
     if (mReaders[i] != nullptr) {
       mReaders[i]->Next();
 
@@ -106,10 +124,21 @@ double LauncherEngine::Read() {
   return result;
 }
 
-void LauncherEngine::Sleep(double duration /* ms */) {
+void LauncherEngine::Sleep(double sleepDuration /* ms */) {
   std::lock_guard<std::mutex> guard(mMutex);
 
-  mReaders[mIndex] = new SilentReader(duration);
+  if (sleepDuration <= 0.0) {
+    return;
+  }
+  if (mChannel == 0) {
+    mReaders[mIndex] = new SilentReader(sleepDuration);
+  } else {
+    delete mScheduledReaders[mIndex];
+
+    mScheduledReaders[mIndex] = new ReaderInfo;
+    mScheduledReaders[mIndex]->SleepDuration = sleepDuration;
+    mScheduledReaders[mIndex]->DelayCount = mTargetChannels - mChannel;
+  }
 
   mIndex = (mIndex + 1) % mMaxReaders;
 }
@@ -126,9 +155,16 @@ void LauncherEngine::Feed(int16_t waveIndex) {
       mReaders[i]->FadeOut();
     }
   }
+  if (mChannel == 0) {
+    mReaders[mIndex] = new WaveReader(mWaves[waveIndex]);
+    mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
+  } else {
+    delete mScheduledReaders[mIndex];
 
-  mReaders[mIndex] = new WaveReader(mWaves[waveIndex]);
-  mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
+    mScheduledReaders[mIndex] = new ReaderInfo;
+    mScheduledReaders[mIndex]->WaveIndex = waveIndex;
+    mScheduledReaders[mIndex]->DelayCount = mTargetChannels - mChannel;
+  }
 
   mIndex = (mIndex + 1) % mMaxReaders;
 }

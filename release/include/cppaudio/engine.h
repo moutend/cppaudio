@@ -7,6 +7,12 @@
 #include "reader.h"
 #include "wave.h"
 
+struct ReaderInfo {
+  double SleepDuration;
+  int16_t WaveIndex;
+  int16_t DelayCount;
+};
+
 namespace PCMAudio {
 class Engine {
 public:
@@ -41,8 +47,9 @@ private:
 
   Wave **mWaves;
   Reader **mReaders;
+  ReaderInfo **mScheduledReaders;
 
-  int16_t mTargetChannels = 2;
+  int16_t mTargetChannels;
   int32_t mTargetSamplesPerSec;
 
   int16_t mChannel;
