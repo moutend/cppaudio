@@ -18,8 +18,8 @@ class Engine {
 public:
   virtual void Reset() = 0;
   virtual void SetFormat(int16_t channels, int32_t samplesPerSec) = 0;
-  virtual void FadeIn() = 0;
-  virtual void FadeOut() = 0;
+  virtual void Restart() = 0;
+  virtual void Pause() = 0;
   virtual bool IsDone() = 0;
   virtual void Next() = 0;
   virtual double Read() = 0;
@@ -32,17 +32,19 @@ public:
 
   void Reset();
   virtual void SetFormat(int16_t channels, int32_t samplesPerSec);
-  void FadeIn();
-  void FadeOut();
+  void Restart();
+  void Pause();
   bool IsDone();
   void Next();
   double Read();
 
   void Sleep(double duration /* ms */);
-  void Feed(int16_t waveIndex);
+  void Start(int16_t waveIndex);
   void Register(int16_t waveIndex, std::istream &input);
 
 private:
+  void start(int16_t waveIndex);
+
   std::mutex mMutex;
 
   Wave **mWaves;
@@ -65,13 +67,13 @@ public:
 
   void Reset();
   virtual void SetFormat(int16_t channels, int32_t samplesPerSec);
-  void FadeIn();
-  void FadeOut();
+  void Restart();
+  void Pause();
   bool IsDone();
   void Next();
   double Read();
 
-  void Feed(char *buffer, int32_t bufferLength);
+  void Start(char *buffer, int32_t bufferLength);
 
 private:
   std::mutex mMutex;

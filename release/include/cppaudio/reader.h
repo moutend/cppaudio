@@ -10,8 +10,8 @@ public:
   virtual ~Reader(){};
 
   virtual void SetFormat(int16_t channels, int32_t samplesPerSec) = 0;
-  virtual void FadeIn() = 0;
-  virtual void FadeOut() = 0;
+  virtual void Restart() = 0;
+  virtual void Pause() = 0;
   virtual bool IsDone() = 0;
   virtual void Next() = 0;
   virtual int32_t Read() = 0;
@@ -23,8 +23,8 @@ public:
   ~WaveReader();
 
   void SetFormat(int16_t channels, int32_t samplesPerSec);
-  void FadeIn();
-  void FadeOut();
+  void Restart();
+  void Pause();
   bool IsDone();
   void Next();
   int32_t Read();
@@ -59,8 +59,8 @@ public:
   ~SilentReader();
 
   void SetFormat(int16_t channels, int32_t samplesPerSec);
-  void FadeIn();
-  void FadeOut();
+  void Restart();
+  void Pause();
   bool IsDone();
   void Next();
   int32_t Read();

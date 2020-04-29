@@ -30,9 +30,9 @@ void WaveReader::SetFormat(int16_t channels, int32_t samplesPerSec) {
           static_cast<double>(mTargetSamplesPerSec);
 }
 
-void WaveReader::FadeOut() { mVolumeFactor = -0.1; }
+void WaveReader::Pause() { mVolumeFactor = -0.1; }
 
-void WaveReader::FadeIn() {
+void WaveReader::Restart() {
   mPause = false;
   mVolumeFactor = 0.1;
 }
@@ -109,9 +109,9 @@ void SilentReader::SetFormat(int16_t channels, int32_t samplesPerSec) {
                         static_cast<int32_t>(mDuration / 1000.0);
 }
 
-void SilentReader::FadeIn() {}
+void SilentReader::Restart() {}
 
-void SilentReader::FadeOut() {}
+void SilentReader::Pause() {}
 
 bool SilentReader::IsDone() { return mSampleSum > mSourceTotalSamples - 1; }
 

@@ -47,22 +47,22 @@ void LauncherEngine::SetFormat(int16_t channels, int32_t samplesPerSec) {
   }
 }
 
-void LauncherEngine::FadeIn() {
+void LauncherEngine::Restart() {
   std::lock_guard<std::mutex> guard(mMutex);
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
-      mReaders[i]->FadeIn();
+      mReaders[i]->Restart();
     }
   }
 }
 
-void LauncherEngine::FadeOut() {
+void LauncherEngine::Pause() {
   std::lock_guard<std::mutex> guard(mMutex);
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
-      mReaders[i]->FadeOut();
+      mReaders[i]->Pause();
     }
   }
 }
@@ -123,6 +123,7 @@ double LauncherEngine::Read() {
 }
 
 void LauncherEngine::Sleep(double sleepDuration /* ms */) {
+  return;
   std::lock_guard<std::mutex> guard(mMutex);
 
   if (sleepDuration <= 0.0) {
@@ -149,7 +150,7 @@ void LauncherEngine::start(int16_t waveIndex) {
   }
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
-      mReaders[i]->FadeOut();
+      mReaders[i]->Pause();
     }
   }
   if (mChannel == 0) {
@@ -167,7 +168,7 @@ void LauncherEngine::start(int16_t waveIndex) {
   mIndex = (mIndex + 1) % mMaxReaders;
 }
 
-void LauncherEngine::Feed(int16_t waveIndex) {
+void LauncherEngine::Start(int16_t waveIndex) {
   std::lock_guard<std::mutex> guard(mMutex);
 
   start(waveIndex);
@@ -227,32 +228,32 @@ void RingEngine::SetFormat(int16_t channels, int32_t samplesPerSec) {
   }
 }
 
-void RingEngine::FadeIn() {
+void RingEngine::Restart() {
   std::lock_guard<std::mutex> guard(mMutex);
 
   int16_t i = mIndex - 1 > 0 ? mIndex - 1 : mMaxReaders - 1;
 
   if (mReaders[i] != nullptr) {
-    mReaders[i]->FadeIn();
+    mReaders[i]->Restart();
   }
 }
 
-void RingEngine::FadeOut() {
+void RingEngine::Pause() {
   std::lock_guard<std::mutex> guard(mMutex);
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
-      mReaders[i]->FadeOut();
+      mReaders[i]->Pause();
     }
   }
 }
 
-void RingEngine::Feed(char *buffer, int32_t bufferLength) {
+void RingEngine::Start(char *buffer, int32_t bufferLength) {
   std::lock_guard<std::mutex> guard(mMutex);
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mReaders[i] != nullptr) {
-      mReaders[i]->FadeOut();
+      mReaders[i]->Pause();
     }
   }
 
