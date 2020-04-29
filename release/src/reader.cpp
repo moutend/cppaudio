@@ -30,9 +30,12 @@ void WaveReader::SetFormat(int16_t channels, int32_t samplesPerSec) {
           static_cast<double>(mTargetSamplesPerSec);
 }
 
-void WaveReader::FadeOut() {}
+void WaveReader::FadeOut() { mVolumeFactor = -0.1; }
 
-void WaveReader::FadeIn() {}
+void WaveReader::FadeIn() {
+  mPause = false;
+  mVolumeFactor = 0.1;
+}
 
 bool WaveReader::IsDone() {
   return mSourceChannels > 2 || mTargetChannels % 2 == 1 ||
@@ -49,6 +52,17 @@ void WaveReader::Next() {
 
   if (mChannel == 0) {
     mDiffSum += mDiff;
+    mVolume = mVolume + mVolumeFactor;
+  }
+  if (mVolume > 1.0) {
+    mVolume = 1.0;
+    mVolumeFactor = 0.0;
+  }
+  if (mVolume < 0.0) {
+    mVolume = 0.0;
+    mVolumeFactor = 0.0;
+
+    mPause = true;
   }
 }
 
