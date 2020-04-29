@@ -70,11 +70,9 @@ void LauncherEngine::FadeOut() {
 bool LauncherEngine::IsDone() {
   std::lock_guard<std::mutex> guard(mMutex);
 
-  for (int16_t i = 0; i < mMaxReaders; i++) {
-    if (mReaders[i] != nullptr) {
+    if (mReaders[(mIndex + mMaxReaders - 1) % mMaxReaders] != nullptr) {
       return false;
     }
-  }
 
   return true;
 }
@@ -90,7 +88,7 @@ void LauncherEngine::Next() {
         if (mScheduledReaders[i]->SleepDuration > 0.0) {
           Sleep(mScheduledReaders[i]->SleepDuration);
         } else {
-          Feed(mScheduledReaders[i]->WaveIndex);
+          start(mScheduledReaders[i]->WaveIndex);
         }
 
         delete mScheduledReaders[i];
@@ -143,9 +141,7 @@ void LauncherEngine::Sleep(double sleepDuration /* ms */) {
   mIndex = (mIndex + 1) % mMaxReaders;
 }
 
-void LauncherEngine::Feed(int16_t waveIndex) {
-  std::lock_guard<std::mutex> guard(mMutex);
-
+void LauncherEngine::start(int16_t waveIndex) {
   if (waveIndex < 0 || waveIndex > mMaxWaves - 1 ||
       mWaves[waveIndex] == nullptr) {
     return;
@@ -167,6 +163,12 @@ void LauncherEngine::Feed(int16_t waveIndex) {
   }
 
   mIndex = (mIndex + 1) % mMaxReaders;
+}
+
+void LauncherEngine::Feed(int16_t waveIndex) {
+  std::lock_guard<std::mutex> guard(mMutex);
+
+  start(waveIndex);
 }
 
 void LauncherEngine::Register(int16_t waveIndex, std::istream &input) {
