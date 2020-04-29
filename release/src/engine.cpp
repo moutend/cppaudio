@@ -70,9 +70,9 @@ void LauncherEngine::FadeOut() {
 bool LauncherEngine::IsDone() {
   std::lock_guard<std::mutex> guard(mMutex);
 
-    if (mReaders[(mIndex + mMaxReaders - 1) % mMaxReaders] != nullptr) {
-      return false;
-    }
+  if (mReaders[(mIndex + mMaxReaders - 1) % mMaxReaders] != nullptr) {
+    return false;
+  }
 
   return true;
 }
@@ -135,6 +135,7 @@ void LauncherEngine::Sleep(double sleepDuration /* ms */) {
 
     mScheduledReaders[mIndex] = new ReaderInfo;
     mScheduledReaders[mIndex]->SleepDuration = sleepDuration;
+    mScheduledReaders[mIndex]->WaveIndex = -1;
     mScheduledReaders[mIndex]->DelayCount = mTargetChannels - mChannel;
   }
 
@@ -158,6 +159,7 @@ void LauncherEngine::start(int16_t waveIndex) {
     delete mScheduledReaders[mIndex];
 
     mScheduledReaders[mIndex] = new ReaderInfo;
+    mScheduledReaders[mIndex]->SleepDuration = 0.0;
     mScheduledReaders[mIndex]->WaveIndex = waveIndex;
     mScheduledReaders[mIndex]->DelayCount = mTargetChannels - mChannel;
   }
