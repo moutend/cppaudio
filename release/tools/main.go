@@ -18,8 +18,9 @@ type WaveFormat struct {
 }
 
 type TestPattern struct {
-	Source WaveFormat
-	Target WaveFormat
+	TemplateName string
+	Source       WaveFormat
+	Target       WaveFormat
 }
 
 var (
@@ -64,7 +65,7 @@ func run() error {
 		return err
 	}
 
-	patterns, err := readPatterns("pattern.csv")
+	patterns, err := createTestPatterns("tests.csv")
 
 	if err != nil {
 		return err
@@ -73,24 +74,22 @@ func run() error {
 	cmakeTexts := []string{}
 	playScripts := []string{}
 
-	for templateName, templateBytes := range CppBytesMap {
-		for _, pattern := range patterns {
-			testName, err := createTest(templateName, templateBytes, pattern)
+	for _, pattern := range patterns {
+		testName, err := createTest(pattern)
 
-			if err != nil {
-				return err
-			}
-
-			cmakeTexts = append(cmakeTexts, fmt.Sprintf("add_subdirectory(%s)", testName))
-			playScripts = append(playScripts, fmt.Sprintf(
-				"play -r %d -c %d -t s%d %s",
-				pattern.Target.SamplesPerSec,
-				pattern.Target.Channels,
-				pattern.Target.BitsPerSample,
-				filepath.Join("..", "build", "tests", testName, "output.raw"),
-			))
-
+		if err != nil {
+			return err
 		}
+
+		cmakeTexts = append(cmakeTexts, fmt.Sprintf("add_subdirectory(%s)", testName))
+		playScripts = append(playScripts, fmt.Sprintf(
+			"play -r %d -c %d -t s%d %s",
+			pattern.Target.SamplesPerSec,
+			pattern.Target.Channels,
+			pattern.Target.BitsPerSample,
+			filepath.Join("..", "build", "tests", testName, "output.raw"),
+		))
+
 	}
 	if err := ioutil.WriteFile(filepath.Join("..", "tests", "CMakeLists.txt"), []byte(strings.Join(cmakeTexts, "\n")), 0644); err != nil {
 		return err
@@ -101,7 +100,7 @@ func run() error {
 	return nil
 }
 
-func readPatterns(path string) ([]TestPattern, error) {
+func createTestPatterns(path string) ([]TestPattern, error) {
 	csvFile, err := os.Open(path)
 
 	if err != nil {
@@ -110,6 +109,10 @@ func readPatterns(path string) ([]TestPattern, error) {
 
 	defer csvFile.Close()
 
+	// The test pattern CSV file must contains 7 columns below.
+	// "test_name,source_samples_per_sec,source_channels,source_bits_per_sample,target_samples_per_sec,target_channels,target_bits_per_sample"
+	const columns = 7
+
 	patterns := []TestPattern{}
 	reader := csv.NewReader(csvFile)
 
@@ -117,22 +120,30 @@ func readPatterns(path string) ([]TestPattern, error) {
 		values, err := reader.Read()
 
 		if line == 1 {
-			continue // Skip reading header.
+			// Skip reading header.
+			continue
 		}
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("pattern.csv (line:%d) %v", line, err)
+			return nil, fmt.Errorf("%s (line:%d) csv.Reader.Read(): %v", line, path, err)
 		}
-		if len(values) != 6 {
-			return nil, fmt.Errorf("pattern.csv (line:%d) CSV must contains 6 columns", line)
+		if len(values) != columns {
+			return nil, fmt.Errorf("%s (line:%d) CSV must contains %d columns", path, line, columns)
 		}
 
-		var sourceSamplesPerSec, sourceChannels, sourceBitsPerSample, targetSamplesPerSec, targetChannels, targetBitsPerSample int
+		var (
+			sourceSamplesPerSec int
+			sourceChannels      int
+			sourceBitsPerSample int
+			targetSamplesPerSec int
+			targetChannels      int
+			targetBitsPerSample int
+		)
 
 		n, err := fmt.Sscanf(
-			strings.Join(values, ","),
+			strings.Join(values[1:], ","),
 			"%d,%d,%d,%d,%d,%d",
 			&sourceSamplesPerSec,
 			&sourceChannels,
@@ -143,25 +154,26 @@ func readPatterns(path string) ([]TestPattern, error) {
 		)
 
 		if err != nil {
-			return nil, fmt.Errorf("pattern.csv (line:%d) %v", line, err)
+			return nil, fmt.Errorf("%s (line:%d) fmt.Sscanf(): %v", path, line, err)
 		}
-		if n != 6 {
-			return nil, fmt.Errorf("pattern.csv (line:%d) csv failed to parse", line)
+		if n != columns-1 {
+			return nil, fmt.Errorf("%s (line:%d) csv failed to parse", path, line)
 		}
 
 		patterns = append(patterns, TestPattern{
-			Source: WaveFormat{sourceSamplesPerSec, sourceChannels, sourceBitsPerSample},
-			Target: WaveFormat{targetSamplesPerSec, targetChannels, targetBitsPerSample},
+			TemplateName: values[0],
+			Source:       WaveFormat{sourceSamplesPerSec, sourceChannels, sourceBitsPerSample},
+			Target:       WaveFormat{targetSamplesPerSec, targetChannels, targetBitsPerSample},
 		})
 	}
 
 	return patterns, nil
 }
 
-func createTest(templateName string, templateBytes []byte, pattern TestPattern) (string, error) {
+func createTest(pattern TestPattern) (string, error) {
 	testName := fmt.Sprintf(
 		"%sFrom%dHz%dch%dbitTo%dHz%dch%dbit",
-		templateName,
+		pattern.TemplateName,
 		pattern.Source.SamplesPerSec,
 		pattern.Source.Channels,
 		pattern.Source.BitsPerSample,
@@ -181,7 +193,7 @@ func createTest(templateName string, templateBytes []byte, pattern TestPattern) 
 		pattern.Source.BitsPerSample,
 	)
 
-	cppText := string(templateBytes)
+	cppText := string(CppBytesMap[pattern.TemplateName])
 	cppText = strings.Replace(cppText, "__INPUT_FILE__", inputFileName, -1)
 	cppText = strings.Replace(cppText, "__OUTPUT_CHANNELS__", fmt.Sprint(pattern.Target.Channels), -1)
 	cppText = strings.Replace(cppText, "__OUTPUT_SAMPLES_PER_SEC__", fmt.Sprint(pattern.Target.SamplesPerSec), -1)
