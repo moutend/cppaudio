@@ -141,7 +141,7 @@ func createTestPatterns(path string) ([]TestPattern, error) {
 			targetChannels      int
 			targetBitsPerSample int
 		)
-
+		fmt.Println("@@@", values[0] == "TestFadeLauncherEngine")
 		n, err := fmt.Sscanf(
 			strings.Join(values[1:], ","),
 			"%d,%d,%d,%d,%d,%d",
@@ -171,6 +171,9 @@ func createTestPatterns(path string) ([]TestPattern, error) {
 }
 
 func createTest(pattern TestPattern) (string, error) {
+	if _, ok := CppBytesMap[pattern.TemplateName]; !ok {
+		return "", fmt.Errorf("template '%s' not found\n", pattern.TemplateName)
+	}
 	testName := fmt.Sprintf(
 		"%sFrom%dHz%dch%dbitTo%dHz%dch%dbit",
 		pattern.TemplateName,
