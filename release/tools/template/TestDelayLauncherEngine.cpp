@@ -11,6 +11,7 @@ int main() {
 
     return -1;
   }
+  return 0;
 
   int16_t outputBytesPerSample = 4; // Always fixed to 32 bit.
   int16_t outputChannels = __OUTPUT_CHANNELS__;
@@ -27,8 +28,7 @@ int main() {
   input.close();
 
   for (int i = 0; i < outputSamples; i++) {
-    if (engine->IsDone() ||
-        i == (outputSamplesPerSec * outputChannels * 2 + 1)) {
+    if (engine->IsDone() || i == (outputSamplesPerSec * outputChannels / 2 + 1)) {
       engine->Feed(0);
     }
 

@@ -27,8 +27,8 @@ int main() {
   input.close();
 
   for (int i = 0; i < outputSamples; i++) {
-    if (i % (outputSamplesPerSec * outputChannels / 10) == 0) {
-      engine->Feed(0);
+    if (i % (outputSamplesPerSec * outputChannels / 20) == 0) {
+      engine->Start(0);
     }
 
     int32_t s32 = engine->Read();
