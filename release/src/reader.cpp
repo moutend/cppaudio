@@ -38,9 +38,8 @@ void WaveReader::Restart() {
 }
 
 bool WaveReader::IsDone() {
-  return mSourceChannels > 2 || mTargetChannels % 2 == 1 ||
-         static_cast<int32_t>(floor(mDiffSum)) * mSourceChannels >
-             mSourceTotalSamples - 1;
+  return static_cast<int32_t>(floor(mDiffSum)) * mSourceChannels >
+         mSourceTotalSamples - 1;
 }
 
 void WaveReader::Next() {
@@ -99,28 +98,45 @@ int32_t WaveReader::ReadInt32t(int32_t index) {
 }
 
 SilentReader::SilentReader(double duration /* ms */)
-    : mTargetChannels(0), mTargetSamplesPerSec(0), mSourceTotalSamples(0),
-      mSampleSum(0), mDuration(duration) {}
+    : mTargetChannels(0), mTargetSamplesPerSec(0), mTargetTotalSamples(0),
+      mDiff(1.0), mDiffSum(0.0), mDuration(duration), mPause(false) {}
 
 SilentReader::~SilentReader() {}
 
 void SilentReader::SetFormat(int16_t channels, int32_t samplesPerSec) {
-  mSourceTotalSamples = mTargetChannels * mTargetSamplesPerSec *
+  mDuration = mDuration - static_cast<double>(floor(mDiffSum)) /
+                              static_cast<double>(samplesPerSec) * 1000.0;
+
+  if (mDuration < 0.0) {
+    mDuration = 0.0;
+  }
+
+  mTargetChannels = channels;
+  mTargetSamplesPerSec = samplesPerSec;
+  mTargetTotalSamples = mTargetChannels * mTargetSamplesPerSec *
                         static_cast<int32_t>(mDuration / 1000.0);
 }
 
-void SilentReader::Restart() {}
+void SilentReader::Restart() { mPause = false; }
 
-void SilentReader::Pause() {}
+void SilentReader::Pause() { mPause = true; }
 
-bool SilentReader::IsDone() { return mSampleSum > mSourceTotalSamples - 1; }
+bool SilentReader::IsDone() {
+  return mDuration < 0.0 ||
+         static_cast<int32_t>(floor(mDiffSum)) * mTargetChannels >
+             mTargetTotalSamples - 1;
+}
 
 void SilentReader::Next() {
-  if (mSampleSum > mSourceTotalSamples - 1) {
+  if (mPause || IsDone()) {
     return;
   }
 
-  mSampleSum += 1;
+  mChannel = (mChannel + 1) % mTargetChannels;
+
+  if (mChannel == 0) {
+    mDiffSum += mDiff;
+  }
 }
 
 int32_t SilentReader::Read() { return 0; }

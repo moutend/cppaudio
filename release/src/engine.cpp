@@ -86,7 +86,10 @@ void LauncherEngine::Next() {
     if (mScheduledReaders[i] != nullptr) {
       if (mScheduledReaders[i]->DelayCount == 0) {
         if (mScheduledReaders[i]->SleepDuration > 0.0) {
-          // Sleep(mScheduledReaders[i]->SleepDuration);
+          mReaders[mIndex] =
+              new SilentReader(mScheduledReaders[i]->SleepDuration);
+          mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
+          mIndex = (mIndex + 1) % mMaxReaders;
         } else {
           for (int16_t j = 0; j < mMaxReaders; j++) {
             if (mReaders[j] != nullptr) {
@@ -131,7 +134,6 @@ double LauncherEngine::Read() {
 }
 
 void LauncherEngine::Sleep(double sleepDuration /* ms */) {
-  return;
   std::lock_guard<std::mutex> guard(mMutex);
 
   if (sleepDuration <= 0.0) {
@@ -139,6 +141,7 @@ void LauncherEngine::Sleep(double sleepDuration /* ms */) {
   }
   if (mChannel == 0) {
     mReaders[mIndex] = new SilentReader(sleepDuration);
+    mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
   } else {
     delete mScheduledReaders[mIndex];
 
