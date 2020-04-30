@@ -31,7 +31,7 @@ int main() {
       engine->Start(0);
     }
     if (i == outputSamplesPerSec * outputChannels * 4) {
-      engine->SetFormat(outputChannels, outputSamplesPerSec * 2);
+      engine->SetFormat(outputChannels, outputSamplesPerSec / 2);
     }
 
     int32_t s32 = engine->Read();
