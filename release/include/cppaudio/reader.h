@@ -45,6 +45,7 @@ private:
   int32_t mSourceTotalSamples;
 
   int16_t mChannel;
+
   double mDiff;
   double mDiffSum;
   double mVolume;
@@ -68,10 +69,14 @@ public:
 private:
   int16_t mTargetChannels;
   int32_t mTargetSamplesPerSec;
+  int32_t mTargetTotalSamples;
 
-  int32_t mSourceTotalSamples;
-  int32_t mSampleSum;
+  int16_t mChannel;
 
+  double mDiff;
+  double mDiffSum;
   double mDuration;
+
+  bool mPause;
 };
 } // namespace PCMAudio
