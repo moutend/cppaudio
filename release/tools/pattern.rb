@@ -4,15 +4,16 @@ puts "template_name,source_samples_per_sec,source_channels,source_bits_per_sampl
 
 [
   # "TestNormalLauncherEngine",
-  # "TestInterruptLauncherEngine",
   # "TestFadeLauncherEngine",
-  # "TestBlankLauncherEngine",
   # "TestStutterLauncherEngine",
+  # "TestInterruptLauncherEngine",
+  # "TestSleepLauncherEngine",
   # "TestDoubleFormatLauncherEngine",
   # "TestHalfFormatLauncherEngine",
   # "TestFixedFormatLauncherEngine",
-  "TestDelayFormatLauncherEngine",
   # "TestDelayLauncherEngine"
+  # "TestDelayFormatLauncherEngine",
+  "TestDelaySleepLauncherEngine",
 ].each do |template_name|
   [44100, 48000, 96000].each do |source_samples_per_sec|
     [1,2].each do |source_channels|
