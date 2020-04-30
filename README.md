@@ -37,11 +37,13 @@ xcodebuild          # Mac OSX
 ### Test
 
 ```console
+git clone https://github.com/moutend/cppaudio
+cd cppaudio/release
 mkdir build
 cd build
-cmake -DBUILD_TESTS ..
+cmake -DBUILD_TESTS=yes ..
 make all
-ctest --verbose
+ctest -j 4 --verbose --timeout 10
 ```
 
 ## LICENSE
