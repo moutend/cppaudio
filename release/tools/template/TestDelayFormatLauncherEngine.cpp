@@ -16,8 +16,8 @@ int main() {
   int16_t outputChannels = __OUTPUT_CHANNELS__;
   int32_t outputSamplesPerSec = __OUTPUT_SAMPLES_PER_SEC__;
 
-  // Create an audio file whic duration is 7 sec.
-  int32_t outputSamples = outputChannels * outputSamplesPerSec * 7;
+  // Create an audio file whic duration is 8 sec.
+  int32_t outputSamples = outputChannels * outputSamplesPerSec * 8;
   char *pData = new char[outputSamples * outputBytesPerSample]{};
 
   PCMAudio::LauncherEngine *engine = new PCMAudio::LauncherEngine(10, 32);
@@ -27,11 +27,11 @@ int main() {
   input.close();
 
   for (int i = 0; i < outputSamples; i++) {
-    if (i != 0 && engine->IsDone()) {
-      engine->Sleep(1000.0);
-    }
     if (engine->IsDone()) {
-      engine->Feed(0);
+      engine->Start(0);
+    }
+    if (i == outputSamplesPerSec * outputChannels * 4 + 1) {
+      engine->SetFormat(outputChannels, outputSamplesPerSec * 2);
     }
 
     int32_t s32 = engine->Read();
