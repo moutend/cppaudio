@@ -62,7 +62,7 @@ private:
 
 class RingEngine : public Engine {
 public:
-  RingEngine();
+  RingEngine(int16_t maxReaders);
   ~RingEngine();
 
   void Reset();
@@ -80,6 +80,7 @@ private:
 
   Wave **mWaves;
   Reader **mReaders;
+  ReaderInfo **mScheduledReaders;
 
   int16_t mTargetChannels;
   int32_t mTargetSamplesPerSec;
@@ -87,5 +88,6 @@ private:
   int16_t mChannel;
   int16_t mMaxReaders;
   int16_t mIndex;
+  int16_t mWaveIndex;
 };
 } // namespace PCMAudio
