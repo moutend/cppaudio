@@ -9,12 +9,14 @@
 //
 // Timeline:
 //
-//  0.0s: Play audio for 1 seconds.
-//  1.0s: Pause playback.
-//  2.0s: Play audio for 1 seconds.
-//  3.0s: Pause playback.
-//  4.0s: Restart playback.
-//  8.0s: Play silence for 2 seconds.
+// 0.0s: Play inputA for 0.1 seconds.
+//  0.1s: Play inputB for 0.1 seconds.
+//  0.2s: Play inputA for 0.1 seconds.
+//  0.3s: Play inputB for 0.1 seconds.
+//  0.4s: Play inputA for 0.1 seconds.
+//  0.5s: Pause playback.
+//  2.0s: Restart playback.
+//  6.9s: Play silence for 3.1 seconds.
 // 10.0s: Done.
 
 int main() {
@@ -39,28 +41,27 @@ int main() {
 
   char *pData = new char[outputSamples * outputBytesPerSample]{};
 
-  PCMAudio::LauncherEngine *engine = new PCMAudio::LauncherEngine(10, 32);
+  PCMAudio::LauncherEngine *engine = new PCMAudio::LauncherEngine(2, 32);
   engine->SetFormat(outputChannels, outputSamplesPerSec);
   engine->Register(0, inputA);
-  engine->Register(1, inputB);
+  engine->Register(0, inputB);
 
   inputA.close();
   inputB.close();
 
+  int16_t index{};
+
   for (int i = 0; i < outputSamples; i++) {
-    if (i == 0) {
-      engine->Start(0);
+    if ((i < outputSamplesPerSec * outputChannels / 2 &&
+         i % (outputSamplesPerSec * outputChannels / 10) == 0) ||
+        engine->IsDone()) {
+      engine->Start(index % 2);
+      index += 1;
     }
     if (i == outputSamplesPerSec * outputChannels) {
       engine->Pause();
     }
     if (i == outputSamplesPerSec * outputChannels * 2) {
-      engine->Start(1);
-    }
-    if (i == outputSamplesPerSec * outputChannels * 3) {
-      engine->Pause();
-    }
-    if (i == outputSamplesPerSec * outputChannels * 4) {
       engine->Restart();
     }
 

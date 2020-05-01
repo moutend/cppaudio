@@ -5,19 +5,15 @@
 
 // Launcher Engine - Test pattern 6
 //
-// This test generates 10 seconds of audio.
+// This test generates 8 seconds of audio.
 //
 // Timeline:
 //
-// 0.0s: Play inputA for 0.1 seconds.
-//  0.1s: Play inputB for 0.1 seconds.
-//  0.2s: Play inputA for 0.1 seconds.
-//  0.3s: Play inputB for 0.1 seconds.
-//  0.4s: Play inputA for 0.1 seconds.
-//  0.5s: Pause playback.
-//  2.0s: Restart playback.
-//  6.9s: Play silence for 3.1 seconds.
-// 10.0s: Done.
+// 0.0s: Play inputA for 1 seconds.
+// 1.0s: Pause playback many times.
+// 2.0s: Restart playback many times.
+// 7.0s: Play inputB for 2 seconds.
+// 8.0s: Done.
 
 int main() {
   std::ifstream inputA("__INPUT_FILE__A.wav", std::ios::binary | std::ios::in);
@@ -37,14 +33,14 @@ int main() {
   int16_t outputBytesPerSample = 4; // Always fixed to 32 bit.
   int16_t outputChannels = __OUTPUT_CHANNELS__;
   int32_t outputSamplesPerSec = __OUTPUT_SAMPLES_PER_SEC__;
-  int32_t outputSamples = outputChannels * outputSamplesPerSec * 10;
+  int32_t outputSamples = outputChannels * outputSamplesPerSec * 8;
 
   char *pData = new char[outputSamples * outputBytesPerSample]{};
 
   PCMAudio::LauncherEngine *engine = new PCMAudio::LauncherEngine(2, 32);
   engine->SetFormat(outputChannels, outputSamplesPerSec);
   engine->Register(0, inputA);
-  engine->Register(0, inputB);
+  engine->Register(1, inputB);
 
   inputA.close();
   inputB.close();
@@ -52,16 +48,15 @@ int main() {
   int16_t index{};
 
   for (int i = 0; i < outputSamples; i++) {
-    if ((i < outputSamplesPerSec * outputChannels / 2 &&
-         i % (outputSamplesPerSec * outputChannels / 10) == 0) ||
-        engine->IsDone()) {
+    if (engine->IsDone()) {
       engine->Start(index % 2);
       index += 1;
     }
-    if (i == outputSamplesPerSec * outputChannels) {
+    if (i >= outputSamplesPerSec * outputChannels &&
+        i < outputSamplesPerSec * outputChannels * 2) {
       engine->Pause();
     }
-    if (i == outputSamplesPerSec * outputChannels * 2) {
+    if (i >= outputSamplesPerSec * outputChannels * 2) {
       engine->Restart();
     }
 

@@ -5,15 +5,14 @@
 
 // Launcher Engine - Test pattern 12
 //
-// This test generates 14 seconds of audio.
+// This test generates 8 seconds of audio.
 //
 // Timeline:
 //
 // 0.0s: Sleep 1500 ms.
-// 1.0s: Change playback format. (Set doubled samples per sec)
-// 2.0s: Play inputA for 5 seconds.
-// 12.0s: Play inputB for 1 seconds.
-// 14.0s: Done.
+// 1.5s: Play inputA for 5 seconds.
+// 6.5s: Play inputB for 5 seconds.
+// 8.0s: Done.
 
 int main() {
   std::ifstream inputA("__INPUT_FILE__A.wav", std::ios::binary | std::ios::in);
@@ -33,7 +32,7 @@ int main() {
   int16_t outputBytesPerSample = 4; // Always fixed to 32 bit.
   int16_t outputChannels = __OUTPUT_CHANNELS__;
   int32_t outputSamplesPerSec = __OUTPUT_SAMPLES_PER_SEC__;
-  int32_t outputSamples = outputChannels * outputSamplesPerSec * 14;
+  int32_t outputSamples = outputChannels * outputSamplesPerSec * 8;
 
   char *pData = new char[outputSamples * outputBytesPerSample]{};
 
@@ -50,9 +49,6 @@ int main() {
   for (int i = 0; i < outputSamples; i++) {
     if (i == 0) {
       engine->Sleep(1500.0);
-    }
-    if (i == outputSamplesPerSec * outputChannels) {
-      engine->SetFormat(outputChannels, outputSamplesPerSec * 2);
     }
     if (i > 0 && engine->IsDone()) {
       engine->Start(index % 2);

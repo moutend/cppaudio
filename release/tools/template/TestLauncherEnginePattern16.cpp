@@ -3,15 +3,15 @@
 #include <fstream>
 #include <iostream>
 
-// Launcher Engine - Test pattern 11
+// Launcher Engine - Test pattern 16
 //
 // This test generates 8 seconds of audio.
 //
 // Timeline:
 //
-// 0.0s: Play inputA for 4 seconds.
-// 4.0s: Change playback format. (Set samples per sec to 44100 Hz)
-// X.0s: Play inputB. (X depends on original format)
+// 0.0s: Sleep 1500 ms while processing 2nd channel.
+// 1.5s: Play inputA for 5 seconds.
+// 6.0s: Play inputB for 1.5 seconds.
 // 8.0s: Done.
 
 int main() {
@@ -47,12 +47,12 @@ int main() {
   int16_t index{};
 
   for (int i = 0; i < outputSamples; i++) {
-    if (engine->IsDone()) {
+    if (i == 1) {
+      engine->Sleep(1500.0);
+    }
+    if (i > 1 && engine->IsDone()) {
       engine->Start(index % 2);
       index += 1;
-    }
-    if (i == outputSamplesPerSec * outputChannels * 4) {
-      engine->SetFormat(outputChannels, 44100);
     }
 
     int32_t s32 = engine->Read();

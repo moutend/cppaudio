@@ -9,10 +9,10 @@
 //
 // Timeline:
 //
-// 0.0s: Sleep 1500 ms while processing 2nd channel.
-// 1.5s: Play inputA for 5 seconds.
-// 6.0s: Play inputB for 1.5 seconds.
-// 8.0s: Done.
+// 0.0s: Play inputA for 5 seconds.
+// 3.0s: Change playback format while processing 2nd channel. (Set double
+// samples per sec) 4.0s: Play inputB for 5 seconds. 6.5s: Play inputA for 5
+// seconds. 8.0s: Done.
 
 int main() {
   std::ifstream inputA("__INPUT_FILE__A.wav", std::ios::binary | std::ios::in);
@@ -47,12 +47,12 @@ int main() {
   int16_t index{};
 
   for (int i = 0; i < outputSamples; i++) {
-    if (i == 1) {
-      engine->Sleep(1500.0);
-    }
-    if (i > 1 && engine->IsDone()) {
+    if (engine->IsDone()) {
       engine->Start(index % 2);
       index += 1;
+    }
+    if (i == outputSamplesPerSec * outputChannels * 3 + 1) {
+      engine->SetFormat(outputChannels, outputSamplesPerSec * 2);
     }
 
     int32_t s32 = engine->Read();

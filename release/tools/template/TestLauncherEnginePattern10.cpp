@@ -5,13 +5,13 @@
 
 // Launcher Engine - Test pattern 10
 //
-// This test generates 8 seconds of audio.
+// This test generates 7 seconds of audio.
 //
 // Timeline:
 //
-// 0.0s: Play inputA for 4 seconds.
-// 4.0s: Change playback format. (Set samples per sec to 44100 Hz)
-// X.0s: Play inputB. (X depends on original format)
+// 0.0s: Play inputA for 3 seconds.
+// 3.0s: Change playback format. (Set half samples per sec)
+// 4.0s: Play inputB for 4 seconds.
 // 8.0s: Done.
 
 int main() {
@@ -51,8 +51,8 @@ int main() {
       engine->Start(index % 2);
       index += 1;
     }
-    if (i == outputSamplesPerSec * outputChannels * 4) {
-      engine->SetFormat(outputChannels, 44100);
+    if (i == outputSamplesPerSec * outputChannels * 3) {
+      engine->SetFormat(outputChannels, outputSamplesPerSec / 2);
     }
 
     int32_t s32 = engine->Read();
