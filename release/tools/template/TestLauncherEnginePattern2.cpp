@@ -3,11 +3,28 @@
 #include <fstream>
 #include <iostream>
 
-int main() {
-  std::ifstream input("__INPUT_FILE__", std::ios::binary | std::ios::in);
+// Launcher Engine - Test pattern 2
+//
+// This test generates 15 seconds of audio.
+//
+// Timeline:
+//
+//  0.0s: Play inputA for 5 seconds.
+//  5.0s: Play inputB for 5 seconds.
+// 10.0s: Play inputA for 5 seconds.
+// 15.0s: Done.
 
-  if (!input.is_open()) {
-    printf("Failed to open '__INPUT_FILE__'.\n");
+int main() {
+  std::ifstream inputA("__INPUT_FILE__A.wav", std::ios::binary | std::ios::in);
+  std::ifstream inputB("__INPUT_FILE__B.wav", std::ios::binary | std::ios::in);
+
+  if (!inputA.is_open()) {
+    printf("Failed to open '__INPUT_FILE__A.wav'.\n");
+
+    return -1;
+  }
+  if (!inputB.is_open()) {
+    printf("Failed to open '__INPUT_FILE__B.wav'.\n");
 
     return -1;
   }
@@ -15,21 +32,24 @@ int main() {
   int16_t outputBytesPerSample = 4; // Always fixed to 32 bit.
   int16_t outputChannels = __OUTPUT_CHANNELS__;
   int32_t outputSamplesPerSec = __OUTPUT_SAMPLES_PER_SEC__;
+  int32_t outputSamples = outputChannels * outputSamplesPerSec * 15;
 
-  // Create an audio file whic duration is 8 sec.
-  int32_t outputSamples = outputChannels * outputSamplesPerSec * 8;
   char *pData = new char[outputSamples * outputBytesPerSample]{};
 
-  PCMAudio::LauncherEngine *engine = new PCMAudio::LauncherEngine(10, 32);
+  PCMAudio::LauncherEngine *engine = new PCMAudio::LauncherEngine(2, 32);
   engine->SetFormat(outputChannels, outputSamplesPerSec);
-  engine->Register(0, input);
+  engine->Register(0, inputA);
+  engine->Register(1, inputB);
 
-  input.close();
+  inputA.close();
+  inputB.close();
+
+  int16_t index{};
 
   for (int i = 0; i < outputSamples; i++) {
-    if (engine->IsDone() ||
-        i == (outputSamplesPerSec * outputChannels / 2 + 1)) {
-      engine->Start(0);
+    if (engine->IsDone()) {
+      engine->Start(index % 2);
+      index += 1;
     }
 
     int32_t s32 = engine->Read();

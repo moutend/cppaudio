@@ -3,11 +3,29 @@
 #include <fstream>
 #include <iostream>
 
-int main() {
-  std::ifstream input("__INPUT_FILE__", std::ios::binary | std::ios::in);
+// Launcher Engine - Test pattern 5
+//
+// This test generates 8 seconds of audio.
+//
+// Timeline:
+//
+// 0.0s: Play inputA for 1 seconds.
+// 1.0s: Pause playback.
+// 2.0s: Restart playback.
+// 7.0s: Play inputB for 2 seconds.
+// 8.0s: Done.
 
-  if (!input.is_open()) {
-    printf("Failed to open '__INPUT_FILE__'.\n");
+int main() {
+  std::ifstream inputA("__INPUT_FILE__A.wav", std::ios::binary | std::ios::in);
+  std::ifstream inputB("__INPUT_FILE__B.wav", std::ios::binary | std::ios::in);
+
+  if (!inputA.is_open()) {
+    printf("Failed to open '__INPUT_FILE__A.wav'.\n");
+
+    return -1;
+  }
+  if (!inputB.is_open()) {
+    printf("Failed to open '__INPUT_FILE__B.wav'.\n");
 
     return -1;
   }
@@ -15,23 +33,30 @@ int main() {
   int16_t outputBytesPerSample = 4; // Always fixed to 32 bit.
   int16_t outputChannels = __OUTPUT_CHANNELS__;
   int32_t outputSamplesPerSec = __OUTPUT_SAMPLES_PER_SEC__;
-
-  // Create an audio file whic duration is 8 sec.
   int32_t outputSamples = outputChannels * outputSamplesPerSec * 8;
+
   char *pData = new char[outputSamples * outputBytesPerSample]{};
 
-  PCMAudio::LauncherEngine *engine = new PCMAudio::LauncherEngine(10, 32);
+  PCMAudio::LauncherEngine *engine = new PCMAudio::LauncherEngine(2, 32);
   engine->SetFormat(outputChannels, outputSamplesPerSec);
-  engine->Register(0, input);
+  engine->Register(0, inputA);
+  engine->Register(1, inputB);
 
-  input.close();
+  inputA.close();
+  inputB.close();
+
+  int16_t index{};
 
   for (int i = 0; i < outputSamples; i++) {
     if (engine->IsDone()) {
-      engine->Start(0);
+      engine->Start(index % 2);
+      index += 1;
     }
-    if (i == outputSamplesPerSec * outputChannels * 4) {
-      engine->SetFormat(outputChannels, outputSamplesPerSec / 2);
+    if (i == outputSamplesPerSec * outputChannels) {
+      engine->Pause();
+    }
+    if (i == outputSamplesPerSec * outputChannels * 2) {
+      engine->Restart();
     }
 
     int32_t s32 = engine->Read();
