@@ -2,7 +2,7 @@
 
 set -e
 
-# Generates 18 WAVE files for testing. The patterns are:
+# Generates 36 WAVE files for testing. The patterns are:
 # 
 # * 44100 Hz - 1 ch - 16 bit / 44100 Hz - 1 ch - 24 bit / 44100 Hz - 1 ch - 32 bit
 # * 44100 Hz - 2 ch - 16 bit / 44100 Hz - 2 ch - 24 bit / 44100 Hz - 2 ch - 32 bit
@@ -18,29 +18,55 @@ set -e
 # 
 # Note
 # 
-# You need place an input.wav into `audio` directory before run this script.
-# An input.wav can be your prefered, but it must have 2 channels at least.
+# You need place an inputA.wav and inputB.wav into `../assets` directory before run this script.
+# These .wav files can be your prefered, but it must have 2 channels and the length must be 5 seconds.
 
-sox ../assets/input.wav -r 44100 -c 1 -b 16 ../assets/44100Hz1ch16bit.wav
-sox ../assets/input.wav -r 44100 -c 1 -b 24 ../assets/44100Hz1ch24bit.wav
-sox ../assets/input.wav -r 44100 -c 1 -b 32 ../assets/44100Hz1ch32bit.wav
+sox ../assets/inputA.wav -r 44100 -c 1 -b 16 ../assets/Test44100Hz1ch16bitA.wav
+sox ../assets/inputA.wav -r 44100 -c 1 -b 24 ../assets/Test44100Hz1ch24bitA.wav
+sox ../assets/inputA.wav -r 44100 -c 1 -b 32 ../assets/Test44100Hz1ch32bitA.wav
 
-sox ../assets/input.wav -r 44100 -c 2 -b 16 ../assets/44100Hz2ch16bit.wav
-sox ../assets/input.wav -r 44100 -c 2 -b 24 ../assets/44100Hz2ch24bit.wav
-sox ../assets/input.wav -r 44100 -c 2 -b 32 ../assets/44100Hz2ch32bit.wav
+sox ../assets/inputA.wav -r 44100 -c 2 -b 16 ../assets/Test44100Hz2ch16bitA.wav
+sox ../assets/inputA.wav -r 44100 -c 2 -b 24 ../assets/Test44100Hz2ch24bitA.wav
+sox ../assets/inputA.wav -r 44100 -c 2 -b 32 ../assets/Test44100Hz2ch32bitA.wav
 
-sox ../assets/input.wav -r 48000 -c 1 -b 16 ../assets/48000Hz1ch16bit.wav
-sox ../assets/input.wav -r 48000 -c 1 -b 24 ../assets/48000Hz1ch24bit.wav
-sox ../assets/input.wav -r 48000 -c 1 -b 32 ../assets/48000Hz1ch32bit.wav
+sox ../assets/inputA.wav -r 48000 -c 1 -b 16 ../assets/Test48000Hz1ch16bitA.wav
+sox ../assets/inputA.wav -r 48000 -c 1 -b 24 ../assets/Test48000Hz1ch24bitA.wav
+sox ../assets/inputA.wav -r 48000 -c 1 -b 32 ../assets/Test48000Hz1ch32bitA.wav
 
-sox ../assets/input.wav -r 48000 -c 2 -b 16 ../assets/48000Hz2ch16bit.wav
-sox ../assets/input.wav -r 48000 -c 2 -b 24 ../assets/48000Hz2ch24bit.wav
-sox ../assets/input.wav -r 48000 -c 2 -b 32 ../assets/48000Hz2ch32bit.wav
+sox ../assets/inputA.wav -r 48000 -c 2 -b 16 ../assets/Test48000Hz2ch16bitA.wav
+sox ../assets/inputA.wav -r 48000 -c 2 -b 24 ../assets/Test48000Hz2ch24bitA.wav
+sox ../assets/inputA.wav -r 48000 -c 2 -b 32 ../assets/Test48000Hz2ch32bitA.wav
 
-sox ../assets/input.wav -r 96000 -c 1 -b 16 ../assets/96000Hz1ch16bit.wav
-sox ../assets/input.wav -r 96000 -c 1 -b 24 ../assets/96000Hz1ch24bit.wav
-sox ../assets/input.wav -r 96000 -c 1 -b 32 ../assets/96000Hz1ch32bit.wav
+sox ../assets/inputA.wav -r 96000 -c 1 -b 16 ../assets/Test96000Hz1ch16bitA.wav
+sox ../assets/inputA.wav -r 96000 -c 1 -b 24 ../assets/Test96000Hz1ch24bitA.wav
+sox ../assets/inputA.wav -r 96000 -c 1 -b 32 ../assets/Test96000Hz1ch32bitA.wav
 
-sox ../assets/input.wav -r 96000 -c 2 -b 16 ../assets/96000Hz2ch16bit.wav
-sox ../assets/input.wav -r 96000 -c 2 -b 24 ../assets/96000Hz2ch24bit.wav
-sox ../assets/input.wav -r 96000 -c 2 -b 32 ../assets/96000Hz2ch32bit.wav
+sox ../assets/inputA.wav -r 96000 -c 2 -b 16 ../assets/Test96000Hz2ch16bitA.wav
+sox ../assets/inputA.wav -r 96000 -c 2 -b 24 ../assets/Test96000Hz2ch24bitA.wav
+sox ../assets/inputA.wav -r 96000 -c 2 -b 32 ../assets/Test96000Hz2ch32bitA.wav
+
+# Generate from inputB.wav
+
+sox ../assets/inputB.wav -r 44100 -c 1 -b 16 ../assets/Test44100Hz1ch16bitB.wav
+sox ../assets/inputB.wav -r 44100 -c 1 -b 24 ../assets/Test44100Hz1ch24bitB.wav
+sox ../assets/inputB.wav -r 44100 -c 1 -b 32 ../assets/Test44100Hz1ch32bitB.wav
+
+sox ../assets/inputB.wav -r 44100 -c 2 -b 16 ../assets/Test44100Hz2ch16bitB.wav
+sox ../assets/inputB.wav -r 44100 -c 2 -b 24 ../assets/Test44100Hz2ch24bitB.wav
+sox ../assets/inputB.wav -r 44100 -c 2 -b 32 ../assets/Test44100Hz2ch32bitB.wav
+
+sox ../assets/inputB.wav -r 48000 -c 1 -b 16 ../assets/Test48000Hz1ch16bitB.wav
+sox ../assets/inputB.wav -r 48000 -c 1 -b 24 ../assets/Test48000Hz1ch24bitB.wav
+sox ../assets/inputB.wav -r 48000 -c 1 -b 32 ../assets/Test48000Hz1ch32bitB.wav
+
+sox ../assets/inputB.wav -r 48000 -c 2 -b 16 ../assets/Test48000Hz2ch16bitB.wav
+sox ../assets/inputB.wav -r 48000 -c 2 -b 24 ../assets/Test48000Hz2ch24bitB.wav
+sox ../assets/inputB.wav -r 48000 -c 2 -b 32 ../assets/Test48000Hz2ch32bitB.wav
+
+sox ../assets/inputB.wav -r 96000 -c 1 -b 16 ../assets/Test96000Hz1ch16bitB.wav
+sox ../assets/inputB.wav -r 96000 -c 1 -b 24 ../assets/Test96000Hz1ch24bitB.wav
+sox ../assets/inputB.wav -r 96000 -c 1 -b 32 ../assets/Test96000Hz1ch32bitB.wav
+
+sox ../assets/inputB.wav -r 96000 -c 2 -b 16 ../assets/Test96000Hz2ch16bitB.wav
+sox ../assets/inputB.wav -r 96000 -c 2 -b 24 ../assets/Test96000Hz2ch24bitB.wav
+sox ../assets/inputB.wav -r 96000 -c 2 -b 32 ../assets/Test96000Hz2ch32bitB.wav
