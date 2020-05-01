@@ -69,7 +69,11 @@ void LauncherEngine::Pause() {
 
 bool LauncherEngine::IsDone() {
   std::lock_guard<std::mutex> guard(mMutex);
-
+  for (int16_t i = 0; i < mMaxReaders; i++) {
+    if (mScheduledReaders[i] != nullptr) {
+      return false;
+    }
+  }
   if (mReaders[(mIndex + mMaxReaders - 1) % mMaxReaders] != nullptr) {
     return false;
   }
