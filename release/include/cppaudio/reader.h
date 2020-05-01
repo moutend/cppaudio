@@ -12,6 +12,7 @@ public:
   virtual void SetFormat(int16_t channels, int32_t samplesPerSec) = 0;
   virtual void Restart() = 0;
   virtual void Pause() = 0;
+  virtual bool IsPause() = 0;
   virtual bool IsDone() = 0;
   virtual void Next() = 0;
   virtual int32_t Read() = 0;
@@ -25,6 +26,7 @@ public:
   void SetFormat(int16_t channels, int32_t samplesPerSec);
   void Restart();
   void Pause();
+  bool IsPause();
   bool IsDone();
   void Next();
   int32_t Read();
@@ -62,6 +64,7 @@ public:
   void SetFormat(int16_t channels, int32_t samplesPerSec);
   void Restart();
   void Pause();
+  bool IsPause();
   bool IsDone();
   void Next();
   int32_t Read();

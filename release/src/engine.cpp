@@ -50,10 +50,10 @@ void LauncherEngine::SetFormat(int16_t channels, int32_t samplesPerSec) {
 void LauncherEngine::Restart() {
   std::lock_guard<std::mutex> guard(mMutex);
 
-  for (int16_t i = 0; i < mMaxReaders; i++) {
-    if (mReaders[i] != nullptr) {
-      mReaders[i]->Restart();
-    }
+  int16_t index = (mIndex + mMaxReaders - 1) % mMaxReaders;
+
+  if (mReaders[index] != nullptr) {
+    mReaders[index]->Restart();
   }
 }
 
@@ -69,6 +69,7 @@ void LauncherEngine::Pause() {
 
 bool LauncherEngine::IsDone() {
   std::lock_guard<std::mutex> guard(mMutex);
+
   for (int16_t i = 0; i < mMaxReaders; i++) {
     if (mScheduledReaders[i] != nullptr) {
       return false;

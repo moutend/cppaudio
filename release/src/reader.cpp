@@ -37,6 +37,8 @@ void WaveReader::Restart() {
   mVolumeFactor = 0.1;
 }
 
+bool WaveReader::IsPause() { return mPause; }
+
 bool WaveReader::IsDone() {
   return static_cast<int32_t>(floor(mDiffSum)) * mSourceChannels >
          mSourceTotalSamples - 1;
@@ -121,6 +123,8 @@ void SilentReader::SetFormat(int16_t channels, int32_t samplesPerSec) {
 void SilentReader::Restart() { mPause = false; }
 
 void SilentReader::Pause() { mPause = true; }
+
+bool SilentReader::IsPause() { return mPause; }
 
 bool SilentReader::IsDone() {
   return mDuration < 0.0 ||
