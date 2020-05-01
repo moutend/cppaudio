@@ -141,7 +141,7 @@ func createTestPatterns(path string) ([]TestPattern, error) {
 			targetChannels      int
 			targetBitsPerSample int
 		)
-		fmt.Println("@@@", values[0] == "TestFadeLauncherEngine")
+
 		n, err := fmt.Sscanf(
 			strings.Join(values[1:], ","),
 			"%d,%d,%d,%d,%d,%d",
@@ -190,7 +190,7 @@ func createTest(pattern TestPattern) (string, error) {
 	fmt.Println("CREATE", outputDir)
 
 	inputFileName := fmt.Sprintf(
-		filepath.Join("..", "..", "..", "assets", "%dHz%dch%dbit.wav"),
+		filepath.Join("..", "..", "..", "assets", "Test%dHz%dch%dbit"),
 		pattern.Source.SamplesPerSec,
 		pattern.Source.Channels,
 		pattern.Source.BitsPerSample,
