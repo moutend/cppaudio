@@ -26,10 +26,16 @@ LauncherEngine::~LauncherEngine() {
   for (int16_t i = 0; i < mMaxReaders; i++) {
     delete mReaders[i];
     mReaders[i] = nullptr;
+
+    delete mScheduledReaders[i];
+    mScheduledReaders[i] = nullptr;
   }
 
   delete[] mReaders;
   mReaders = nullptr;
+
+  delete[] mScheduledReaders;
+  mScheduledReaders = nullptr;
 }
 
 void LauncherEngine::Reset() {}
@@ -124,20 +130,6 @@ void LauncherEngine::Next() {
   }
 }
 
-double LauncherEngine::Read() {
-  std::lock_guard<std::mutex> guard(mMutex);
-
-  double result = 0.0;
-
-  for (int16_t i = 0; i < mMaxReaders; i++) {
-    if (mReaders[i] != nullptr) {
-      result += mReaders[i]->Read();
-    }
-  }
-
-  return result;
-}
-
 void LauncherEngine::Sleep(double sleepDuration /* ms */) {
   std::lock_guard<std::mutex> guard(mMutex);
 
@@ -157,6 +149,20 @@ void LauncherEngine::Sleep(double sleepDuration /* ms */) {
   }
 
   mIndex = (mIndex + 1) % mMaxReaders;
+}
+
+double LauncherEngine::Read() {
+  std::lock_guard<std::mutex> guard(mMutex);
+
+  double result = 0.0;
+
+  for (int16_t i = 0; i < mMaxReaders; i++) {
+    if (mReaders[i] != nullptr) {
+      result += mReaders[i]->Read();
+    }
+  }
+
+  return result;
 }
 
 void LauncherEngine::Start(int16_t waveIndex) {
@@ -218,6 +224,12 @@ RingEngine::~RingEngine() {
   for (int16_t i = 0; i < mMaxReaders; i++) {
     delete mWaves[i];
     mWaves[i] = nullptr;
+
+    delete mReaders[i];
+    mReaders[i] = nullptr;
+
+    delete mScheduledReaders[i];
+    mScheduledReaders = nullptr;
   }
 
   delete[] mWaves;
@@ -225,6 +237,9 @@ RingEngine::~RingEngine() {
 
   delete[] mReaders;
   mReaders = nullptr;
+
+  delete[] mScheduledReaders;
+  mScheduledReaders = nullptr;
 }
 
 void RingEngine::Reset() {}
@@ -260,37 +275,6 @@ void RingEngine::Pause() {
       mReaders[i]->Pause();
     }
   }
-}
-
-void RingEngine::Start(char *buffer, int32_t bufferLength) {
-  std::lock_guard<std::mutex> guard(mMutex);
-
-  if (buffer == nullptr || bufferLength <= 0) {
-    return;
-  }
-  for (int16_t i = 0; i < mMaxReaders; i++) {
-    if (mReaders[i] != nullptr) {
-      mReaders[i]->Pause();
-    }
-  }
-
-  delete mWaves[mWaveIndex];
-  mWaves[mWaveIndex] = new Wave(buffer, bufferLength);
-
-  if (mChannel == 0) {
-    delete mReaders[mIndex];
-    mReaders[mIndex] = new WaveReader(mWaves[mWaveIndex]);
-    mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
-  } else {
-    delete mScheduledReaders[mIndex];
-    mScheduledReaders[mIndex] = new ReaderInfo;
-    mScheduledReaders[mIndex]->SleepDuration = 0.0;
-    mScheduledReaders[mIndex]->WaveIndex = mWaveIndex;
-    mScheduledReaders[mIndex]->DelayCount = mTargetChannels - mChannel;
-  }
-
-  mIndex = (mIndex + 1) % mMaxReaders;
-  mWaveIndex = (mWaveIndex + 1) % mMaxReaders;
 }
 
 bool RingEngine::IsDone() {
@@ -350,6 +334,26 @@ void RingEngine::Next() {
   }
 }
 
+void RingEngine::Sleep(double sleepDuration /* ms */) {
+  std::lock_guard<std::mutex> guard(mMutex);
+
+  if (sleepDuration <= 0.0) {
+    return;
+  }
+  if (mChannel == 0) {
+    mReaders[mIndex] = new SilentReader(sleepDuration);
+    mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
+  } else {
+    delete mScheduledReaders[mIndex];
+    mScheduledReaders[mIndex] = new ReaderInfo;
+    mScheduledReaders[mIndex]->SleepDuration = sleepDuration;
+    mScheduledReaders[mIndex]->WaveIndex = -1;
+    mScheduledReaders[mIndex]->DelayCount = mTargetChannels - mChannel;
+  }
+
+  mIndex = (mIndex + 1) % mMaxReaders;
+}
+
 double RingEngine::Read() {
   std::lock_guard<std::mutex> guard(mMutex);
 
@@ -362,5 +366,36 @@ double RingEngine::Read() {
   }
 
   return result;
+}
+
+void RingEngine::Start(char *buffer, int32_t bufferLength) {
+  std::lock_guard<std::mutex> guard(mMutex);
+
+  if (buffer == nullptr || bufferLength <= 0) {
+    return;
+  }
+  for (int16_t i = 0; i < mMaxReaders; i++) {
+    if (mReaders[i] != nullptr) {
+      mReaders[i]->Pause();
+    }
+  }
+
+  delete mWaves[mWaveIndex];
+  mWaves[mWaveIndex] = new Wave(buffer, bufferLength);
+
+  if (mChannel == 0) {
+    delete mReaders[mIndex];
+    mReaders[mIndex] = new WaveReader(mWaves[mWaveIndex]);
+    mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
+  } else {
+    delete mScheduledReaders[mIndex];
+    mScheduledReaders[mIndex] = new ReaderInfo;
+    mScheduledReaders[mIndex]->SleepDuration = 0.0;
+    mScheduledReaders[mIndex]->WaveIndex = mWaveIndex;
+    mScheduledReaders[mIndex]->DelayCount = mTargetChannels - mChannel;
+  }
+
+  mIndex = (mIndex + 1) % mMaxReaders;
+  mWaveIndex = (mWaveIndex + 1) % mMaxReaders;
 }
 } // namespace PCMAudio

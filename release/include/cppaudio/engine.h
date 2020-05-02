@@ -22,6 +22,7 @@ public:
   virtual void Pause() = 0;
   virtual bool IsDone() = 0;
   virtual void Next() = 0;
+  virtual void Sleep(double duration /* ms */) = 0;
   virtual double Read() = 0;
 };
 
@@ -31,14 +32,14 @@ public:
   ~LauncherEngine();
 
   void Reset();
-  virtual void SetFormat(int16_t channels, int32_t samplesPerSec);
+  void SetFormat(int16_t channels, int32_t samplesPerSec);
   void Restart();
   void Pause();
   bool IsDone();
   void Next();
+  void Sleep(double duration /* ms */);
   double Read();
 
-  void Sleep(double duration /* ms */);
   void Start(int16_t waveIndex);
   void Register(int16_t waveIndex, std::istream &input);
 
@@ -66,11 +67,12 @@ public:
   ~RingEngine();
 
   void Reset();
-  virtual void SetFormat(int16_t channels, int32_t samplesPerSec);
+  void SetFormat(int16_t channels, int32_t samplesPerSec);
   void Restart();
   void Pause();
   bool IsDone();
   void Next();
+  void Sleep(double duration /* ms */);
   double Read();
 
   void Start(char *buffer, int32_t bufferLength);
