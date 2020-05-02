@@ -16,19 +16,24 @@ LauncherEngine::~LauncherEngine() {
   std::lock_guard<std::mutex> guard(mMutex);
 
   for (int16_t i = 0; i < mMaxWaves; i++) {
-    delete mWaves[i];
-    mWaves[i] = nullptr;
+    if (mWaves[i] != nullptr) {
+      delete mWaves[i];
+      mWaves[i] = nullptr;
+    }
   }
 
   delete[] mWaves;
   mWaves = nullptr;
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
-    delete mReaders[i];
-    mReaders[i] = nullptr;
-
-    delete mScheduledReaders[i];
-    mScheduledReaders[i] = nullptr;
+    if (mReaders[i] != nullptr) {
+      delete mReaders[i];
+      mReaders[i] = nullptr;
+    }
+    if (mScheduledReaders[i] != nullptr) {
+      delete mScheduledReaders[i];
+      mScheduledReaders[i] = nullptr;
+    }
   }
 
   delete[] mReaders;
@@ -97,6 +102,7 @@ void LauncherEngine::Next() {
     if (mScheduledReaders[i] != nullptr) {
       if (mScheduledReaders[i]->DelayCount == 0) {
         if (mScheduledReaders[i]->SleepDuration > 0.0) {
+          delete mReaders[mIndex];
           mReaders[mIndex] =
               new SilentReader(mScheduledReaders[i]->SleepDuration);
           mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
@@ -107,6 +113,8 @@ void LauncherEngine::Next() {
               mReaders[j]->Pause();
             }
           }
+
+          delete mReaders[mIndex];
           mReaders[mIndex] =
               new WaveReader(mWaves[mScheduledReaders[i]->WaveIndex]);
           mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
@@ -178,6 +186,7 @@ void LauncherEngine::Start(int16_t waveIndex) {
     }
   }
   if (mChannel == 0) {
+    delete mReaders[mIndex];
     mReaders[mIndex] = new WaveReader(mWaves[waveIndex]);
     mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
   } else {
@@ -222,14 +231,18 @@ RingEngine::~RingEngine() {
   std::lock_guard<std::mutex> guard(mMutex);
 
   for (int16_t i = 0; i < mMaxReaders; i++) {
-    delete mWaves[i];
-    mWaves[i] = nullptr;
-
-    delete mReaders[i];
-    mReaders[i] = nullptr;
-
-    delete mScheduledReaders[i];
-    mScheduledReaders = nullptr;
+    if (mWaves[i] != nullptr) {
+      delete mWaves[i];
+      mWaves[i] = nullptr;
+    }
+    if (mReaders[i] != nullptr) {
+      delete mReaders[i];
+      mReaders[i] = nullptr;
+    }
+    if (mScheduledReaders[i] != nullptr) {
+      delete mScheduledReaders[i];
+      mScheduledReaders = nullptr;
+    }
   }
 
   delete[] mWaves;
