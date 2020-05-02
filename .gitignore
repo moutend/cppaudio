@@ -1,3 +1,4 @@
 build/
 tests/
 *.wav
+tests.csv
