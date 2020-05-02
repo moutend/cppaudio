@@ -3,23 +3,23 @@
 #include <fstream>
 #include <iostream>
 
-// Launcher Engine - Test pattern 8
+// Ring Engine - Test pattern 8
 //
 // This test generates 10 seconds of audio.
 //
 // Timeline:
 //
-//  0.0s: Play inputA for 1 seconds.
-//  1.0s: Pause playback.
-//  2.0s: Play inputB for 1 seconds.
-//  3.0s: Pause playback.
+// 0.0s: Play inputA for 1 seconds.
+// 1.0s: Pause playback.
+// 2.0s: Play inputB for 0.1 seconds.
+// 3.0s: Pause playback.
 //  4.0s: Restart playback.
 //  8.0s: Play silence for 2 seconds.
 // 10.0s: Done.
 
 int main() {
-  std::ifstream inputA("__INPUT_FILE__A.wav", std::ios::binary | std::ios::in);
-  std::ifstream inputB("__INPUT_FILE__B.wav", std::ios::binary | std::ios::in);
+  std::ifstream inputA("__INPUT_FILE__A.wav");
+  std::ifstream inputB("__INPUT_FILE__B.wav");
 
   if (!inputA.is_open()) {
     printf("Failed to open '__INPUT_FILE__A.wav'.\n");
@@ -32,6 +32,31 @@ int main() {
     return -1;
   }
 
+  std::streampos inputALength{};
+  std::streampos inputBLength{};
+
+  inputA.seekg(0, std::ios::end);
+  inputALength = inputA.tellg();
+  inputA.seekg(0, std::ios::beg);
+
+  inputB.seekg(0, std::ios::end);
+  inputBLength = inputB.tellg();
+  inputB.seekg(0, std::ios::beg);
+
+  size_t bufferALength{};
+  bufferALength = static_cast<size_t>(inputALength);
+  char *bufferA = new char[bufferALength]{};
+
+  size_t bufferBLength{};
+  bufferBLength = static_cast<size_t>(inputBLength);
+  char *bufferB = new char[bufferBLength]{};
+
+  inputA.read(bufferA, bufferALength);
+  inputA.close();
+
+  inputB.read(bufferB, bufferBLength);
+  inputB.close();
+
   int16_t outputBytesPerSample = 4; // Always fixed to 32 bit.
   int16_t outputChannels = __OUTPUT_CHANNELS__;
   int32_t outputSamplesPerSec = __OUTPUT_SAMPLES_PER_SEC__;
@@ -39,23 +64,20 @@ int main() {
 
   char *pData = new char[outputSamples * outputBytesPerSample]{};
 
-  PCMAudio::LauncherEngine *engine = new PCMAudio::LauncherEngine(10, 32);
+  PCMAudio::RingEngine *engine = new PCMAudio::RingEngine(32);
   engine->SetFormat(outputChannels, outputSamplesPerSec);
-  engine->Register(0, inputA);
-  engine->Register(1, inputB);
 
-  inputA.close();
-  inputB.close();
+  int16_t index{};
 
   for (int i = 0; i < outputSamples; i++) {
     if (i == 0) {
-      engine->Start(0);
+      engine->Start(bufferA, bufferALength);
     }
     if (i == outputSamplesPerSec * outputChannels) {
       engine->Pause();
     }
     if (i == outputSamplesPerSec * outputChannels * 2) {
-      engine->Start(1);
+      engine->Start(bufferB, bufferBLength);
     }
     if (i == outputSamplesPerSec * outputChannels * 3) {
       engine->Pause();
@@ -80,6 +102,12 @@ int main() {
 
   delete engine;
   engine = nullptr;
+
+  delete[] bufferA;
+  bufferA = nullptr;
+
+  delete[] bufferB;
+  bufferB = nullptr;
 
   return 0;
 }
