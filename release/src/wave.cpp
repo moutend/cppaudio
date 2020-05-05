@@ -5,17 +5,33 @@
 #include <sstream>
 
 namespace PCMAudio {
-Wave::Wave(const char *buffer, size_t bufferLength) {
+Wave::Wave(const char *buffer, size_t bufferLength)
+    : mFormatTag(0), mChannels(0), mSamplesPerSec(0), mAvgBytesPerSec(0),
+      mBlockAlign(0), mBitsPerSample(0), mDataLength(0), mData(nullptr),
+      mLoaded(false) {
   if (buffer == nullptr || bufferLength == 0) {
     return;
   }
 
   std::istringstream input(std::string(buffer, bufferLength));
 
+  if (input.peek() == EOF) {
+    return;
+  }
+
   load(input);
 }
 
-Wave::Wave(std::istream &input) { load(input); }
+Wave::Wave(std::istream &input)
+    : mFormatTag(0), mChannels(0), mSamplesPerSec(0), mAvgBytesPerSec(0),
+      mBlockAlign(0), mBitsPerSample(0), mDataLength(0), mData(nullptr),
+      mLoaded(false) {
+  if (input.peek() == EOF) {
+    return;
+  }
+
+  load(input);
+}
 
 void Wave::load(std::istream &input) {
   char chunkNameStr[5]{}; // null terminated C-style string.
@@ -94,7 +110,10 @@ void Wave::load(std::istream &input) {
   mLoaded = true;
 }
 
-Wave::~Wave() { delete[] mData; }
+Wave::~Wave() {
+  delete[] mData;
+  mData = nullptr;
+}
 
 int16_t Wave::FormatTag() { return mFormatTag; }
 int16_t Wave::Channels() { return mChannels; }

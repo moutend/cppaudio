@@ -32,7 +32,7 @@ private:
   int16_t mBitsPerSample;
 
   std::streamsize mDataLength;
-  char *mData = nullptr;
-  bool mLoaded = false;
+  char *mData;
+  bool mLoaded;
 };
 } // namespace PCMAudio
