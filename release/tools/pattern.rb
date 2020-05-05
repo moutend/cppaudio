@@ -5,7 +5,7 @@ puts "template_name,source_samples_per_sec,source_channels,source_bits_per_sampl
 [
   # "TestWavePattern1",
   # "TestWavePattern2",
-  # "TestLauncherEnginePattern1",
+  "TestLauncherEnginePattern1",
   # "TestLauncherEnginePattern2",
   # "TestLauncherEnginePattern3",
   # "TestLauncherEnginePattern4",
