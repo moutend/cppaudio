@@ -54,6 +54,7 @@ private:
   double mVolumeFactor;
 
   bool mPause;
+  bool mIsDone;
 };
 
 class SilentReader : public Reader {
@@ -81,5 +82,6 @@ private:
   double mDuration;
 
   bool mPause;
+  bool mIsDone;
 };
 } // namespace PCMAudio

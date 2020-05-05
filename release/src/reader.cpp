@@ -8,7 +8,8 @@ WaveReader::WaveReader(Wave *&wave)
     : mWave(wave), mTargetChannels(0), mTargetSamplesPerSec(0),
       mSourceChannels(0), mSourceSamplesPerSec(0), mSourceBytesPerSample(0),
       mSourceTotalBytes(0), mSourceTotalSamples(0), mChannel(0), mDiff(0.0),
-      mDiffSum(0.0), mVolume(1.0), mVolumeFactor(0.0), mPause(false) {
+      mDiffSum(0.0), mVolume(1.0), mVolumeFactor(0.0), mPause(false),
+      mIsDone(false) {
   if (wave == nullptr) {
     return;
   }
@@ -40,8 +41,14 @@ void WaveReader::Restart() {
 bool WaveReader::IsPause() { return mPause; }
 
 bool WaveReader::IsDone() {
-  return static_cast<int32_t>(floor(mDiffSum)) * mSourceChannels >
-         mSourceTotalSamples - 1;
+  if (mIsDone) {
+    return true;
+  }
+
+  mIsDone = static_cast<int32_t>(floor(mDiffSum)) * mSourceChannels >
+            mSourceTotalSamples - 1;
+
+  return mIsDone;
 }
 
 void WaveReader::Next() {
@@ -68,6 +75,10 @@ void WaveReader::Next() {
 }
 
 int32_t WaveReader::Read() {
+  if (mPause || IsDone()) {
+    return 0;
+  }
+
   double ratio = mDiffSum - floor(mDiffSum);
   int32_t base = static_cast<int32_t>(floor(mDiffSum)) * mSourceChannels;
   int32_t channel = mChannel % mSourceChannels;
@@ -101,7 +112,8 @@ int32_t WaveReader::ReadInt32t(int32_t index) {
 
 SilentReader::SilentReader(double duration /* ms */)
     : mTargetChannels(0), mTargetSamplesPerSec(0), mTargetTotalSamples(0),
-      mDiff(1.0), mDiffSum(0.0), mDuration(duration), mPause(false) {}
+      mDiff(1.0), mDiffSum(0.0), mDuration(duration), mPause(false),
+      mIsDone(false) {}
 
 SilentReader::~SilentReader() {}
 
@@ -127,9 +139,15 @@ void SilentReader::Pause() { mPause = true; }
 bool SilentReader::IsPause() { return mPause; }
 
 bool SilentReader::IsDone() {
-  return mDuration < 0.0 ||
-         static_cast<int32_t>(floor(mDiffSum)) * mTargetChannels >
-             mTargetTotalSamples - 1;
+  if (mIsDone) {
+    return true;
+  }
+
+  mIsDone = mDuration < 0.0 ||
+            static_cast<int32_t>(floor(mDiffSum)) * mTargetChannels >
+                mTargetTotalSamples - 1;
+
+  return mIsDone;
 }
 
 void SilentReader::Next() {
