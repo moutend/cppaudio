@@ -75,6 +75,10 @@ void WaveReader::Next() {
 }
 
 int32_t WaveReader::Read() {
+  if (mPause || IsDone()) {
+    return 0;
+  }
+
   double ratio = mDiffSum - floor(mDiffSum);
   int32_t base = static_cast<int32_t>(floor(mDiffSum)) * mSourceChannels;
   int32_t channel = mChannel % mSourceChannels;
