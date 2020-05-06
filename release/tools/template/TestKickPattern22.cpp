@@ -62,7 +62,7 @@ int main() {
 
   char *pData = new char[outputSamples * outputBytesPerSample]{};
 
-  PCMAudio::KickEngine *engine = new PCMAudio::KickEngine(32);
+  PCMAudio::KickEngine *engine = new PCMAudio::KickEngine(2, 32);
   engine->SetFormat(outputChannels, outputSamplesPerSec);
 
   int16_t index{};
