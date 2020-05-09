@@ -8,7 +8,7 @@ WaveReader::WaveReader(Wave *&wave, double pan)
     : mWave{wave}, mTargetChannels{}, mTargetSamplesPerSec{}, mSourceChannels{},
       mSourceSamplesPerSec{}, mSourceBytesPerSample{}, mSourceTotalBytes{},
       mSourceTotalSamples{}, mChannel{}, mDelayChannel{-1}, mDelaySamples{},
-      mDiff{}, mDiffSum{}, mPan{}, mDelayDuration{}, mDelayVolume{},
+      mDiff{}, mDiffSum{}, mPan{pan}, mDelayDuration{}, mDelayVolume{},
       mMasterVolume{1.0}, mMasterVolumeFactor{}, mPause{}, mIsDone{} {
   if (wave == nullptr) {
     return;
@@ -21,17 +21,17 @@ WaveReader::WaveReader(Wave *&wave, double pan)
   mSourceTotalBytes = static_cast<int32_t>(mWave->DataLength());
   mSourceTotalSamples = mSourceTotalBytes / mSourceBytesPerSample;
 
-  if (mPan == 0) {
+  if (mPan == 0.0) {
     return;
   }
-  if (mPan < 0) {
+  if (mPan < 0.0) {
     mDelayChannel = 1;
   }
-  if (mPan > 0) {
+  if (mPan > 0.0) {
     mDelayChannel = 0;
   }
 
-  const double maxSteps{20};
+  const double maxSteps{20.0};
 
   if (mPan < -maxSteps) {
     mPan = maxSteps;

@@ -20,7 +20,7 @@ public:
 
 class WaveReader : public Reader {
 public:
-  WaveReader(Wave *&wave, double pan);
+  WaveReader(Wave *&wave, double pan = 0.0);
   ~WaveReader();
 
   void SetFormat(int16_t channels, int32_t samplesPerSec);
