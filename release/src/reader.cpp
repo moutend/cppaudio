@@ -165,9 +165,9 @@ void SilentReader::SetFormat(int16_t channels, int32_t samplesPerSec) {
 
   mTargetChannels = channels;
   mTargetSamplesPerSec = samplesPerSec;
-  mTargetTotalSamples =
+  mTargetTotalSamples = static_cast<int32_t>(
       static_cast<double>(mTargetChannels * mTargetSamplesPerSec) * mDuration /
-      1000.0;
+      1000.0);
 }
 
 void SilentReader::Restart() { mPause = false; }
