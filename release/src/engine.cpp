@@ -4,11 +4,10 @@
 
 namespace PCMAudio {
 KickEngine::KickEngine(int16_t maxRegisteredWaves, int16_t maxReaders)
-    : mTemporaryWaves(nullptr), mRegisteredWaves(nullptr), mReaders(nullptr),
-      mScheduledReaders(nullptr), mTargetChannels(0), mTargetSamplesPerSec(0),
-      mChannel(0), mIndex(0), mTemporaryWaveIndex(0),
-      mMaxTemporaryWaves(maxReaders), mMaxRegisteredWaves(maxRegisteredWaves),
-      mMaxReaders(maxReaders) {
+    : mTemporaryWaves{}, mRegisteredWaves{}, mReaders{}, mScheduledReaders{},
+      mTargetChannels{}, mTargetSamplesPerSec{}, mChannel{}, mIndex{},
+      mTemporaryWaveIndex{}, mMaxTemporaryWaves{maxReaders},
+      mMaxRegisteredWaves{maxRegisteredWaves}, mMaxReaders{maxReaders} {
   mTemporaryWaves = new Wave *[mMaxTemporaryWaves] {};
   mRegisteredWaves = new Wave *[mMaxRegisteredWaves] {};
   mReaders = new Reader *[mMaxReaders] {};
@@ -113,12 +112,12 @@ void KickEngine::Next() {
         continue;
       }
       switch (mScheduledReaders[i]->Type) {
-      case 1:
+      case RT_Sleep:
         delete mReaders[mIndex];
         mReaders[mIndex] =
             new SilentReader(mScheduledReaders[i]->SleepDuration);
         break;
-      case 2:
+      case RT_RegisteredWave:
         for (int16_t j = 0; j < mMaxReaders; j++) {
           if (mReaders[j] != nullptr) {
             mReaders[j]->Pause();
@@ -127,9 +126,10 @@ void KickEngine::Next() {
 
         delete mReaders[mIndex];
         mReaders[mIndex] = new WaveReader(
-            mRegisteredWaves[mScheduledReaders[i]->RegisteredWaveIndex]);
+            mRegisteredWaves[mScheduledReaders[i]->RegisteredWaveIndex],
+            mScheduledReaders[i]->Pan);
         break;
-      case 3:
+      case RT_TemporaryWave:
         for (int16_t j = 0; j < mMaxReaders; j++) {
           if (mReaders[j] != nullptr) {
             mReaders[j]->Pause();
@@ -138,7 +138,10 @@ void KickEngine::Next() {
 
         delete mReaders[mIndex];
         mReaders[mIndex] = new WaveReader(
-            mTemporaryWaves[mScheduledReaders[i]->TemporaryWaveIndex]);
+            mTemporaryWaves[mScheduledReaders[i]->TemporaryWaveIndex],
+            mScheduledReaders[i]->Pan);
+        break;
+      default:
         break;
       }
 
@@ -172,7 +175,7 @@ void KickEngine::Sleep(double sleepDuration /* ms */) {
   } else {
     delete mScheduledReaders[mIndex];
     mScheduledReaders[mIndex] = new ReaderInfo;
-    mScheduledReaders[mIndex]->Type = 1;
+    mScheduledReaders[mIndex]->Type = RT_Sleep;
     mScheduledReaders[mIndex]->SleepDuration = sleepDuration;
     mScheduledReaders[mIndex]->DelayCount = mTargetChannels - mChannel;
   }
@@ -210,7 +213,7 @@ void KickEngine::Register(int16_t waveIndex, std::istream &input) {
   }
 }
 
-void KickEngine::Kick(int16_t waveIndex) {
+void KickEngine::Kick(int16_t waveIndex, double pan) {
   std::lock_guard<std::mutex> guard(mMutex);
 
   if (waveIndex < 0 || waveIndex > mMaxRegisteredWaves - 1 ||
@@ -224,20 +227,21 @@ void KickEngine::Kick(int16_t waveIndex) {
   }
   if (mChannel == 0) {
     delete mReaders[mIndex];
-    mReaders[mIndex] = new WaveReader(mRegisteredWaves[waveIndex]);
+    mReaders[mIndex] = new WaveReader(mRegisteredWaves[waveIndex], pan);
     mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
   } else {
     delete mScheduledReaders[mIndex];
     mScheduledReaders[mIndex] = new ReaderInfo;
-    mScheduledReaders[mIndex]->Type = 2;
+    mScheduledReaders[mIndex]->Type = RT_RegisteredWave;
     mScheduledReaders[mIndex]->RegisteredWaveIndex = waveIndex;
+    mScheduledReaders[mIndex]->Pan = pan;
     mScheduledReaders[mIndex]->DelayCount = mTargetChannels - mChannel;
   }
 
   mIndex = (mIndex + 1) % mMaxReaders;
 }
 
-void KickEngine::Kick(char *buffer, int32_t bufferLength) {
+void KickEngine::Kick(char *buffer, int32_t bufferLength, double pan) {
   std::lock_guard<std::mutex> guard(mMutex);
 
   if (buffer == nullptr || bufferLength <= 0) {
@@ -254,13 +258,15 @@ void KickEngine::Kick(char *buffer, int32_t bufferLength) {
 
   if (mChannel == 0) {
     delete mReaders[mIndex];
-    mReaders[mIndex] = new WaveReader(mTemporaryWaves[mTemporaryWaveIndex]);
+    mReaders[mIndex] =
+        new WaveReader(mTemporaryWaves[mTemporaryWaveIndex], pan);
     mReaders[mIndex]->SetFormat(mTargetChannels, mTargetSamplesPerSec);
   } else {
     delete mScheduledReaders[mIndex];
     mScheduledReaders[mIndex] = new ReaderInfo;
-    mScheduledReaders[mIndex]->Type = 3;
+    mScheduledReaders[mIndex]->Type = RT_TemporaryWave;
     mScheduledReaders[mIndex]->TemporaryWaveIndex = mTemporaryWaveIndex;
+    mScheduledReaders[mIndex]->Pan = pan;
     mScheduledReaders[mIndex]->DelayCount = mTargetChannels - mChannel;
   }
 

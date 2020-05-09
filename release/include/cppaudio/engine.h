@@ -7,16 +7,24 @@
 #include "reader.h"
 #include "wave.h"
 
+namespace PCMAudio {
+enum EReaderType {
+  RT_None = 0,
+  RT_Sleep = 1,
+  RT_RegisteredWave = 2,
+  RT_TemporaryWave = 3
+};
+
 struct ReaderInfo {
-  int16_t Type;
+  EReaderType Type;
   int16_t RegisteredWaveIndex;
   int16_t TemporaryWaveIndex;
   double SleepDuration;
   int16_t WaveIndex;
+  double Pan;
   int16_t DelayCount;
 };
 
-namespace PCMAudio {
 class Engine {
 public:
   virtual void SetFormat(int16_t channels, int32_t samplesPerSec) = 0;
@@ -42,8 +50,8 @@ public:
   double Read();
 
   void Register(int16_t waveIndex, std::istream &input);
-  void Kick(int16_t waveIndex);
-  void Kick(char *buffer, int32_t bufferLength);
+  void Kick(int16_t waveIndex, double pan = 0.0);
+  void Kick(char *buffer, int32_t bufferLength, double pan = 0.0);
 
 private:
   std::mutex mMutex;
