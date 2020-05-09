@@ -20,7 +20,7 @@ public:
 
 class WaveReader : public Reader {
 public:
-  WaveReader(Wave *&wave);
+  WaveReader(Wave *&wave, double pan);
   ~WaveReader();
 
   void SetFormat(int16_t channels, int32_t samplesPerSec);
@@ -47,11 +47,16 @@ private:
   int32_t mSourceTotalSamples;
 
   int16_t mChannel;
+  int16_t mDelayChannel;
+  int32_t mDelaySamples;
 
   double mDiff;
   double mDiffSum;
-  double mVolume;
-  double mVolumeFactor;
+  double mPan;
+  double mDelayDuration;
+  double mDelayVolume;
+  double mMasterVolume;
+  double mMasterVolumeFactor;
 
   bool mPause;
   bool mIsDone;

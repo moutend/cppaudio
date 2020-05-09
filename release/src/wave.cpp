@@ -6,9 +6,8 @@
 
 namespace PCMAudio {
 Wave::Wave(const char *buffer, size_t bufferLength)
-    : mFormatTag(0), mChannels(0), mSamplesPerSec(0), mAvgBytesPerSec(0),
-      mBlockAlign(0), mBitsPerSample(0), mDataLength(0), mData(nullptr),
-      mLoaded(false) {
+    : mFormatTag{}, mChannels{}, mSamplesPerSec{}, mAvgBytesPerSec{},
+      mBlockAlign{}, mBitsPerSample{}, mDataLength{}, mData{}, mLoaded{} {
   if (buffer == nullptr || bufferLength == 0) {
     return;
   }

@@ -4,12 +4,12 @@
 #include <iostream>
 
 namespace PCMAudio {
-WaveReader::WaveReader(Wave *&wave)
-    : mWave(wave), mTargetChannels(0), mTargetSamplesPerSec(0),
-      mSourceChannels(0), mSourceSamplesPerSec(0), mSourceBytesPerSample(0),
-      mSourceTotalBytes(0), mSourceTotalSamples(0), mChannel(0), mDiff(0.0),
-      mDiffSum(0.0), mVolume(1.0), mVolumeFactor(0.0), mPause(false),
-      mIsDone(false) {
+WaveReader::WaveReader(Wave *&wave, double pan)
+    : mWave{wave}, mTargetChannels{}, mTargetSamplesPerSec{}, mSourceChannels{},
+      mSourceSamplesPerSec{}, mSourceBytesPerSample{}, mSourceTotalBytes{},
+      mSourceTotalSamples{}, mChannel{}, mDelayChannel{-1}, mDelaySamples{},
+      mDiff{}, mDiffSum{}, mPan{}, mDelayDuration{}, mDelayVolume{},
+      mMasterVolume{1.0}, mMasterVolumeFactor{}, mPause{}, mIsDone{} {
   if (wave == nullptr) {
     return;
   }
@@ -20,6 +20,30 @@ WaveReader::WaveReader(Wave *&wave)
   mSourceBytesPerSample = mWave->BitsPerSample() / 8;
   mSourceTotalBytes = static_cast<int32_t>(mWave->DataLength());
   mSourceTotalSamples = mSourceTotalBytes / mSourceBytesPerSample;
+
+  if (mPan == 0) {
+    return;
+  }
+  if (mPan < 0) {
+    mDelayChannel = 1;
+  }
+  if (mPan > 0) {
+    mDelayChannel = 0;
+  }
+
+  const double maxSteps{20};
+
+  if (mPan < -maxSteps) {
+    mPan = maxSteps;
+  }
+  if (mPan > maxSteps) {
+    mPan = -maxSteps;
+  }
+
+  const double maxDelayDuration{0.5}; /* ms */
+
+  mDelayDuration = maxDelayDuration * abs(mPan) / maxSteps;
+  mDelayVolume = 1.0 - abs(mPan) / 100.0;
 }
 
 WaveReader::~WaveReader() {}
@@ -27,15 +51,17 @@ WaveReader::~WaveReader() {}
 void WaveReader::SetFormat(int16_t channels, int32_t samplesPerSec) {
   mTargetChannels = channels;
   mTargetSamplesPerSec = samplesPerSec;
+  mDelaySamples = static_cast<int32_t>(
+      static_cast<double>(mSourceSamplesPerSec) * mDelayDuration / 1000.0);
   mDiff = static_cast<double>(mSourceSamplesPerSec) /
           static_cast<double>(mTargetSamplesPerSec);
 }
 
-void WaveReader::Pause() { mVolumeFactor = -0.1; }
+void WaveReader::Pause() { mMasterVolumeFactor = -0.1; }
 
 void WaveReader::Restart() {
   mPause = false;
-  mVolumeFactor = 0.1;
+  mMasterVolumeFactor = 0.1;
 }
 
 bool WaveReader::IsPause() { return mPause; }
@@ -60,15 +86,15 @@ void WaveReader::Next() {
 
   if (mChannel == 0) {
     mDiffSum += mDiff;
-    mVolume = mVolume + mVolumeFactor;
+    mMasterVolume = mMasterVolume + mMasterVolumeFactor;
   }
-  if (mVolume > 1.0) {
-    mVolume = 1.0;
-    mVolumeFactor = 0.0;
+  if (mMasterVolume > 1.0) {
+    mMasterVolume = 1.0;
+    mMasterVolumeFactor = 0.0;
   }
-  if (mVolume < 0.0) {
-    mVolume = 0.0;
-    mVolumeFactor = 0.0;
+  if (mMasterVolume < 0.0) {
+    mMasterVolume = 0.0;
+    mMasterVolumeFactor = 0.0;
 
     mPause = true;
   }
@@ -86,9 +112,22 @@ int32_t WaveReader::Read() {
       mSourceBytesPerSample * channel + mSourceBytesPerSample * base;
   int32_t index2 = mSourceBytesPerSample * channel +
                    mSourceBytesPerSample * (base + mSourceChannels);
-  int32_t value1 = index1 < mSourceTotalBytes ? ReadInt32t(index1) : 0;
-  int32_t value2 = index2 < mSourceTotalBytes ? ReadInt32t(index2) : 0;
-  double result = mVolume * (value1 * (1.0 - ratio) + value2 * ratio);
+
+  if (mChannel % 2 == mDelayChannel) {
+    index1 = index1 - mDelaySamples * mSourceChannels * mSourceBytesPerSample;
+    index2 = index2 - mDelaySamples * mSourceChannels * mSourceBytesPerSample;
+  }
+
+  int32_t value1 =
+      index1 >= 0 && index1 < mSourceTotalBytes ? ReadInt32t(index1) : 0;
+  int32_t value2 =
+      index2 >= 0 && index2 < mSourceTotalBytes ? ReadInt32t(index2) : 0;
+
+  double result = mMasterVolume * (value1 * (1.0 - ratio) + value2 * ratio);
+
+  if (channel == mDelayChannel) {
+    ratio = ratio * mDelayVolume;
+  }
 
   return static_cast<int32_t>(result);
 }
@@ -111,9 +150,8 @@ int32_t WaveReader::ReadInt32t(int32_t index) {
 }
 
 SilentReader::SilentReader(double duration /* ms */)
-    : mTargetChannels(0), mTargetSamplesPerSec(0), mTargetTotalSamples(0),
-      mDiff(1.0), mDiffSum(0.0), mDuration(duration), mPause(false),
-      mIsDone(false) {}
+    : mTargetChannels{}, mTargetSamplesPerSec{}, mTargetTotalSamples{},
+      mDiff{1.0}, mDiffSum{}, mDuration{duration}, mPause{}, mIsDone{} {}
 
 SilentReader::~SilentReader() {}
 
